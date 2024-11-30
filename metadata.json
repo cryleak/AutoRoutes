@@ -1,0 +1,11 @@
+{
+    "name": "Auto Routes",
+    "creator": "ITheSerenity",
+    "version": "1.0.0",
+    "description": "bomb denmark",
+    "entry": "index.js",
+	"requires": [
+        "Amaterasu",
+		"BloomCore"
+    ]
+}

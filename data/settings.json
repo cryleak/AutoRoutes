@@ -1,0 +1,54 @@
+[
+    {
+        "category": "Ring",
+        "settings": [
+            {
+                "type": 4,
+                "name": "radius",
+                "value": "0.7"
+            },
+            {
+                "type": 7,
+                "name": "type",
+                "value": 0
+            },
+            {
+                "type": 4,
+                "name": "yaw",
+                "value": "-176.0473175048828"
+            },
+            {
+                "type": 4,
+                "name": "pitch",
+                "value": "8.751083374023438"
+            },
+            {
+                "type": 4,
+                "name": "etherBlock",
+                "value": "0,0,0"
+            },
+            {
+                "type": 8,
+                "name": "awaitSecretTypes",
+                "options": [
+                    {
+                        "name": "awaitSecretBat",
+                        "value": false
+                    },
+                    {
+                        "name": "awaitSecretChest",
+                        "value": false
+                    },
+                    {
+                        "name": "awaitSecretEssence",
+                        "value": false
+                    },
+                    {
+                        "name": "awaitSecretItem",
+                        "value": false
+                    }
+                ]
+            }
+        ]
+    }
+]
