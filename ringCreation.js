@@ -1,10 +1,11 @@
 import DefaultConfig from "../Amaterasu/core/DefaultConfig"
 import Settings from "../Amaterasu/core/Settings"
 
-const config = new DefaultConfig("AutoRoutes")
+const config = new DefaultConfig("AutoRoutes", "NonexistentConfig.json")
 
 export const configNames = [
     "radius",
+    "height",
     "type",
     "yaw",
     "pitch",
@@ -22,21 +23,28 @@ config
         title: "Radius",
         description: "Radius of the ring in blocks.",
         category: "Ring",
-        value: "0.7",
+        value: "0.7"
+    })
+    .addTextInput({
+        configName: "height",
+        title: "Height",
+        description: "Height of the ring in blocks.",
+        category: "Ring",
+        value: "0.1"
     })
     .addDropDown({
         configName: "type",
         title: "Ring type",
         description: "Select an option",
         category: "Ring",
-        options: ["Look", "Etherwarp", "Walk", "Finish Route"]
+        options: ["Look", "Etherwarp", "Walk", "Finish Route"],
+        value: 0
     })
     .addTextInput({
         configName: "yaw",
         title: "Yaw",
         description: "Number between -180 and 180.",
         category: "Ring",
-        value: "",
         shouldShow: data => data.type === 0 || data.type === 2 || data.type === 3
     })
     .addTextInput({
@@ -44,7 +52,6 @@ config
         title: "Pitch",
         description: "Number between -180 and 180.",
         category: "Ring",
-        value: "",
         shouldShow: data => data.type === 0 || data.type === 2 || data.type === 3
     })
     .addTextInput({
@@ -52,7 +59,6 @@ config
         title: "Etherwarp Block Coordinates",
         description: "Seperated by commas.",
         category: "Ring",
-        value: "",
         shouldShow: data => data.type === 1
     })
     .addMultiCheckbox({
@@ -63,11 +69,11 @@ config
         options: [
             {
                 title: "Bat",
-                configName: "awaitSecretBat"
+                configName: "awaitSecretBat",
             },
             {
                 title: "Chest",
-                configName: "awaitSecretChest"
+                configName: "awaitSecretChest",
             },
             {
                 title: "Essence",

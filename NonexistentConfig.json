@@ -5,47 +5,48 @@
             {
                 "type": 4,
                 "name": "radius",
-                "value": "0.7"
+                "value": 0.7
+            },
+            {
+                "type": 4,
+                "name": "height",
+                "value": "0.1"
             },
             {
                 "type": 7,
                 "name": "type",
-                "value": 0
+                "value": 3
             },
             {
                 "type": 4,
                 "name": "yaw",
-                "value": "-176.0473175048828"
+                "value": "-92.5491943359375"
             },
             {
                 "type": 4,
                 "name": "pitch",
-                "value": "8.751083374023438"
+                "value": "43.66958999633789"
             },
             {
                 "type": 4,
                 "name": "etherBlock",
-                "value": "0,0,0"
+                "value": "-149,67,-82"
             },
             {
                 "type": 8,
                 "name": "awaitSecretTypes",
                 "options": [
                     {
-                        "name": "awaitSecretBat",
-                        "value": false
+                        "name": "awaitSecretBat"
                     },
                     {
-                        "name": "awaitSecretChest",
-                        "value": false
+                        "name": "awaitSecretChest"
                     },
                     {
-                        "name": "awaitSecretEssence",
-                        "value": false
+                        "name": "awaitSecretEssence"
                     },
                     {
-                        "name": "awaitSecretItem",
-                        "value": false
+                        "name": "awaitSecretItem"
                     }
                 ]
             }

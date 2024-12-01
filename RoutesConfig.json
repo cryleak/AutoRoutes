@@ -1,0 +1,70 @@
+{
+    "profiles": {
+        "RetardedProfile": {
+            "Fairy": [
+                {
+                    "type": "etherwarp",
+                    "position": [
+                        -12.682650724574074,
+                        68,
+                        -25.557579267542337
+                    ],
+                    "radius": 0.7,
+                    "awaitSecret": {},
+                    "height": "0.1",
+                    "etherBlock": [
+                        -12,
+                        67,
+                        -22
+                    ]
+                },
+                {
+                    "type": "etherwarp",
+                    "position": [
+                        -12.5,
+                        68,
+                        -22.5
+                    ],
+                    "radius": 0.7,
+                    "awaitSecret": {},
+                    "height": "0.1",
+                    "etherBlock": [
+                        -15,
+                        67,
+                        -22
+                    ]
+                },
+                {
+                    "type": "etherwarp",
+                    "position": [
+                        -15.63024202054487,
+                        68,
+                        -22.46644740758751
+                    ],
+                    "radius": 0.7,
+                    "awaitSecret": {},
+                    "height": "0.1",
+                    "etherBlock": [
+                        -17,
+                        67,
+                        -22
+                    ]
+                },
+                {
+                    "type": "finish",
+                    "position": [
+                        -17.573453673365094,
+                        68,
+                        -22.41835992464958
+                    ],
+                    "radius": 0.7,
+                    "awaitSecret": {},
+                    "height": "0.1",
+                    "yaw": -272.5491943359375,
+                    "pitch": "43.66958999633789"
+                }
+            ]
+        }
+    },
+    "selectedProfile": "RetardedProfile"
+}

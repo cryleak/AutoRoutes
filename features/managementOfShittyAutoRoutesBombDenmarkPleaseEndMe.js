@@ -2,7 +2,7 @@ import ringCreation from "../ringCreation"
 import { configNames } from "../ringCreation"
 import { convertToRelative, convertFromRelative, getRoomName, chat, ringTypes, availableArgs, playerCoords, convertToRelativeYaw, convertToRealYaw, setWalking } from "../utils/utils"
 import { data } from "../utils/routesData"
-import { getDistance3D, C08PacketPlayerBlockPlacement, isValidEtherwarpBlock, MCBlockPos, raytraceBlocks } from "../../BloomCore/utils/utils"
+import { getDistance3D, isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
 import Vector3 from "../../BloomCore/utils/Vector3";
 
 let editingCoords = null
@@ -20,8 +20,6 @@ register("command", () => {
     editingCoords = null
     const config = ringCreation().getConfig()
 
-    config.setConfigValue("Ring", "radius", "0.7")
-    config.setConfigValue("Ring", "type", 0)
     config.setConfigValue("Ring", "yaw", Player.getYaw().toString())
     config.setConfigValue("Ring", "pitch", Player.getPitch().toString())
     const prediction = raytraceBlocks([Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ()], Vector3.fromPitchYaw(Player.getPitch(), Player.getYaw()), 60, isValidEtherwarpBlock, true, true) ?? "0,0,0"
@@ -54,6 +52,7 @@ register("command", (index) => {
 
     const config = ringCreation().getConfig()
     config.setConfigValue("Ring", "radius", ring.radius)
+    config.setConfigValue("Ring", "height", ring.height)
     config.setConfigValue("Ring", "type", ringTypes.indexOf(ring.type))
     config.setConfigValue("Ring", "yaw", convertToRealYaw(ring.yaw) ?? Player.getYaw().toString())
     config.setConfigValue("Ring", "pitch", ring.pitch ?? Player.getPitch().toString())
@@ -108,7 +107,7 @@ function addRing(args, position) {
     else if (["look", "walk", "finish"].includes(ringType)) args.yaw = convertToRelativeYaw(args.yaw)
 
 
-    let ring = { type: ringType, position: convertToRelative(position), radius: parseFloat(args.radius), awaitSecret: awaitSecretState }
+    let ring = { type: ringType, position: convertToRelative(position), radius: parseFloat(args.radius), awaitSecret: awaitSecretState, height: args.height }
     for (let i = 0; i < ringSpecificArgs.length; i++) {
         ring[ringSpecificArgs[i]] = args[ringSpecificArgs[i]]
     }

@@ -1,70 +1,65 @@
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const C05PacketPlayerLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C05PacketPlayerLook")
 const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook")
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
+let lastTP = Date.now()
+let yaw = 0
+let pitch = 0
+let clicking = false
+let rotating = false
+let ignoreNextC06 = false
+let ignoreNextC06NoS08 = false
+let lastS08Event
+let sending = false
 
-class ServerRotations {
-    constructor() {
-        this.ignoreNextC06 = false
-        this.click = false
-        this.lastS08Event = null
-        this.registers = []
-        this.registers.push(register("packetSent", (packet, event) => {
-            if (this.ignoreNextC06 && packet instanceof C06PacketPlayerPosLook) {
-                this.ignoreNextC06 = false
-                if (!this.lastS08Event.isCancelled()) return
-            }
-            if (!this.isValidYaw() || Player.getPlayer().field_70154_o) return
-            if (this.yaw == packet.func_149462_g() && this.pitch == packet.func_149470_h()) return
-            cancel(event)
-            this.registers[0].unregister()
-            let wasOnGround = packet.func_149465_i()
-            ChatLib.chat(this.yaw)
-            if (packet instanceof C05PacketPlayerLook) Client.sendPacket(new C05PacketPlayerLook(this.yaw, this.pitch, wasOnGround))
-            else Client.sendPacket(new C06PacketPlayerPosLook(Player.getX(), Player.getPlayer().func_174813_aQ().field_72338_b, Player.getZ(), this.yaw, this.pitch, wasOnGround))
-            if (this.click) {
-                this.click = false
-                this.airClick()
-                this.registers.forEach(register => register.unregister())
-            }
-        }).setFilteredClass(C03PacketPlayer).unregister())
-
-        this.registers.push(register("renderEntity", (entity) => {
-            if (entity.getEntity() != Player.getPlayer() || !this.isValidYaw() || Player.getPlayer().field_70154_o) return
-            Player.getPlayer().field_70761_aq = this.yaw
-            Player.getPlayer().field_70759_as = this.yaw
-        }).unregister())
-
-
-        register("packetReceived", (packet, event) => {
-            this.ignoreNextC06 = true
-            this.lastS08Event = event
-        }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook)
+register("packetSent", (packet, event) => {
+    const simpleName = packet.class.getSimpleName()
+    if (simpleName === "C06PacketPlayerPosLook" && (ignoreNextC06 || ignoreNextC06NoS08)) {
+        ignoreNextC06 = false
+        if (!lastS08Event?.isCancelled() || ignoreNextC06NoS08) {
+            ignoreNextC06NoS08 = false
+            return
+        }
     }
+    if (sending || !rotating) return
 
-    set(y, p) {
-        this.yaw = parseFloat(y)
-        this.pitch = parseFloat(p)
-        this.resetRot = false
-        this.registers.forEach(register => register.register())
-    }
+    cancel(event)
+    const wasOnGround = packet.func_149465_i()
 
-    clickAt(y, p) {
-        this.yaw = parseFloat(y)
-        this.pitch = parseFloat(p)
-        this.click = true
-        this.resetRot = false
-        this.registers.forEach(register => register.register())
-    }
 
-    airClick() {
-        Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
-    }
+    sending = true
+    if (simpleName === "C05PacketPlayerLook") Client.sendPacket(new C05PacketPlayerLook(yaw, pitch, wasOnGround))
+    else Client.sendPacket(new C06PacketPlayerPosLook(Player.getX(), Player.getPlayer().func_174813_aQ().field_72338_b, Player.getZ(), yaw, pitch, wasOnGround))
+    sending = false
 
-    isValidYaw(yaw, pitch) {
-        return (this.yaw || this.yaw === 0) && (this.pitch || this.pitch === 0)
-    }
+    if (clicking) {
+        airClick()
+        yaw = Player.getYaw()
+        pitch = Player.getPitch()
+    } else rotating = false
+}).setFilteredClass(C03PacketPlayer)
 
+register("packetReceived", (packet, event) => {
+    ignoreNextC06 = true
+    lastS08Event = event
+}).setFilteredClass(S08PacketPlayerPosLook)
+
+export const clickAt = (y, p) => {
+    yaw = parseFloat(y)
+    pitch = parseFloat(p)
+    if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat("Invalid rotation! How is this possible?")
+
+    rotating = true
+    clicking = true
 }
 
-export default new ServerRotations()
+export const ignoreNextC06Packet = () => {
+    ignoreNextC06NoS08 = true
+}
+
+const airClick = () => {
+    // ChatLib.chat(Date.now() - lastTP); lastTP = Date.now()
+    clicking = false
+    Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
+}

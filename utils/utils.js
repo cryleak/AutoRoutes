@@ -11,7 +11,7 @@ export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
     ["etherwarp", ["etherBlock"]],
     ["walk", ["yaw", "pitch"]],
-    ["finish", []]
+    ["finish", ["yaw", "pitch"]]
 ])
 const rotationNumber = new Map([
     ["NORTH", 0],
@@ -52,6 +52,7 @@ export const convertFromRelative = (relativeCoord) => {
 export const convertToRealYaw = (yaw) => {
     const currRoom = dungeonUtils.INSTANCE.currentRoom;
     const roomRotation = currRoom.rotation;
+    if (isNaN(yaw)) return null
     return parseFloat(yaw) + (parseFloat(rotationNumber.get(roomRotation.toString())) * 90)
 }
 
@@ -109,12 +110,13 @@ export function chat(message) {
 }
 
 export const swapToItem = (targetItemName) => {
-    const itemSlot = Player?.getInventory()?.getItems()?.findIndex(item => { return item?.getName()?.toLowerCase()?.includes(targetItemName.toLowerCase()) })
+    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.toLowerCase().includes(targetItemName.toLowerCase()))
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
-        throw new Error(`Unable to find "${targetItemName}" in your hotbar`)
+        return false
     } else {
         Player.setHeldItemIndex(itemSlot)
+        return true
     }
 }
 
@@ -153,33 +155,50 @@ export const calcYawPitch = (x, y, z) => {
     pitch = pitch * 180 / Math.PI
     if (pitch < -90 || pitch > 90 || isNaN(yaw) || isNaN(pitch) || yaw == null || pitch == null || yaw == undefined || pitch == null) return;
 
-    return [yaw, pitch]
+    return { yaw, pitch }
 
 }
 
-const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding");
-let lastUse = Date.now()
-export const setSneaking = (state) => {
-    KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i(), state)
-    console.log(`${Date.now() - lastUse}, ${state}`)
-    lastUse = Date.now()
-}
+const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
 
 export const setWalking = (state) => KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(), state)
 
-/*
-let sneaking = false
-
 
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
+let sneaking = Player.isSneaking()
+
 export const setSneaking = (state) => {
-    if (state && !sneaking) Client.sendPacket(new  (Player.getPlayer(), C0BPacketEntityAction.Action.STOP_SNEAKING))
+    if (state && !sneaking) Client.sendPacket(new C0BPacketEntityAction(Player.getPlayer(), C0BPacketEntityAction.Action.START_SNEAKING))
+    if (!state && sneaking) Client.sendPacket(new C0BPacketEntityAction(Player.getPlayer(), C0BPacketEntityAction.Action.STOP_SNEAKING))
 }
 
-register("packetSent", packet => {
+register("packetSent", (packet, event) => {
     const action = packet.func_180764_b()
-    if (action == C0BPacketEntityAction.Action.START_SNEAKING) sneaking = true
-    if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) sneaking = false
+    if (action == C0BPacketEntityAction.Action.START_SNEAKING) {
+        if (sneaking) cancel(event)
+        sneaking = true
+    }
+    if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) {
+        if (!sneaking) cancel(event)
+        sneaking = false
+    }
 }).setFilteredClass(C0BPacketEntityAction)
-*/
 
+
+
+register("worldUnload", () => sneaking = false)
+
+export const movementKeys = [
+    Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i()
+]
+
+export const releaseMovementKeys = () => movementKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, false))
+export const repressMovementKeys = () => movementKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, Keyboard.isKeyDown(keybind)))
+
+//Retarded way to get center of block cause I couldn't think when I made this
+export const centerCoords = (blockCoords) => {
+    return [blockCoords[0] + (Math.sign(blockCoords[0] === 1) ? -0.5 : 0.5), blockCoords[1], blockCoords[2] + (Math.sign(blockCoords[2] === 1) ? -0.5 : 0.5)]
+}
