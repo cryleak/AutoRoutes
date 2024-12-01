@@ -6,12 +6,16 @@ import Vector3 from '../../BloomCore/utils/Vector3.js';
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils")
 const renderManager = Client.getMinecraft().func_175598_ae()
 
-export const ringTypes = ["look", "etherwarp", "walk", "finish"]
+export const ringTypes = ["look", "etherwarp", "aotv", "hype", "walk", "finish", "superboom", "pearlclip"]
 export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
-    ["etherwarp", ["etherBlock"]],
+    ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
+    ["aotv", ["yaw", "pitch"]],
+    ["hype", ["yaw", "pitch"]],
     ["walk", ["yaw", "pitch"]],
-    ["finish", ["yaw", "pitch"]]
+    ["finish", ["yaw", "pitch"]],
+    ["superboom", ["yaw", "pitch"]],
+    ["pearlclip", ["pearlClipDistance"]]
 ])
 const rotationNumber = new Map([
     ["NORTH", 0],
@@ -22,6 +26,7 @@ const rotationNumber = new Map([
 
 
 export const convertToRelative = (realCoord) => {
+    if (!realCoord) return null
     const currRoom = dungeonUtils.INSTANCE.currentRoom;
     const roomRotation = currRoom.rotation;
     const clayCoord = extractCoord(currRoom.clayPos.toString());
@@ -36,6 +41,7 @@ export const convertToRelative = (realCoord) => {
 }
 
 export const convertFromRelative = (relativeCoord) => {
+    if (!relativeCoord) return null
     const currRoom = dungeonUtils.INSTANCE.currentRoom;
     const roomRotation = currRoom.rotation;
     const clayCoord = extractCoord(currRoom.clayPos.toString());
@@ -70,10 +76,10 @@ export const getRoomName = () => {
 const rotateToNorth = (vector, currentRotation) => {
     let output = vector.copy();
     switch (currentRotation.toString()) {
-        case "NORTH": output = vector; break;
-        case "WEST": output = vector.rotate(90); break;
-        case "SOUTH": output = vector.rotate(180); break;
-        case "EAST": output = vector.rotate(270); break;
+        case "NORTH": output = new Vector3(-vector.getX(), vector.getY(), -vector.getZ()); break;
+        case "WEST": output = new Vector3(vector.getZ(), vector.getY(), -vector.getX()); break;
+        case "SOUTH": output = vector; break;
+        case "EAST": output = new Vector3(-vector.getZ(), vector.getY(), vector.getX()); break;
         default: console.log(currentRotation)
     }
     return output;
@@ -82,10 +88,10 @@ const rotateToNorth = (vector, currentRotation) => {
 const rotateFromNorth = (vector, desiredRotation) => {
     let output = vector.copy();
     switch (desiredRotation.toString()) {
-        case "NORTH": output = vector; break;
-        case "WEST": output = vector.rotate(270); break;
-        case "SOUTH": output = vector.rotate(180); break;
-        case "EAST": output = vector.rotate(90); break;
+        case "NORTH": output = new Vector3(-vector.getX(), vector.getY(), -vector.getZ()); break;
+        case "WEST": output = new Vector3(-vector.getZ(), vector.getY(), vector.getX()); break;
+        case "SOUTH": output = vector; break;
+        case "EAST": output = new Vector3(vector.getZ(), vector.getY(), -vector.getX()); break;
         default: console.log(currentRotation)
     }
     return output;
@@ -109,10 +115,21 @@ export function chat(message) {
     ChatLib.chat("§0[§6AutoRoutes§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 
-export const swapToItem = (targetItemName) => {
-    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.toLowerCase().includes(targetItemName.toLowerCase()))
+export const swapFromName = (targetItemName) => {
+    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.toLowerCase()?.includes(targetItemName.toLowerCase()))
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
+        return false
+    } else {
+        Player.setHeldItemIndex(itemSlot)
+        return true
+    }
+}
+
+export const swapFromItemID = (targetItemID) => {
+    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getID() == targetItemID)
+    if (itemSlot === -1 || itemSlot > 7) {
+        chat(`Unable to find Item ID ${targetItemID} in your hotbar`)
         return false
     } else {
         Player.setHeldItemIndex(itemSlot)
@@ -137,12 +154,13 @@ export const playerCoords = () => {
     }
 }
 
-export const calcYawPitch = (x, y, z) => {
+export const calcYawPitch = (x, y, z, sneaking = false) => {
     let d = {
         x: x - Player.getX(),
-        y: y - (Player.getY() + Player.getPlayer().func_70047_e()),
+        y: y - (Player.getY() + 1.6200000047683716),
         z: z - Player.getZ()
     }
+    if (sneaking) d.y -= 0.08000004291534424
     let yaw = 0
     let pitch = 0
     if (d.x != 0) {
@@ -172,14 +190,23 @@ export const setSneaking = (state) => {
     if (!state && sneaking) Client.sendPacket(new C0BPacketEntityAction(Player.getPlayer(), C0BPacketEntityAction.Action.STOP_SNEAKING))
 }
 
+let lastTrigger = Date.now()
 register("packetSent", (packet, event) => {
     const action = packet.func_180764_b()
     if (action == C0BPacketEntityAction.Action.START_SNEAKING) {
         if (sneaking) cancel(event)
+        else {
+            // ChatLib.chat(Date.now() - lastTrigger)
+            lastTrigger = Date.now()
+        }
         sneaking = true
     }
     if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) {
         if (!sneaking) cancel(event)
+        else {
+            // ChatLib.chat(Date.now() - lastTrigger)
+            lastTrigger = Date.now()
+        }
         sneaking = false
     }
 }).setFilteredClass(C0BPacketEntityAction)
@@ -201,4 +228,31 @@ export const repressMovementKeys = () => movementKeys.forEach(keybind => KeyBind
 //Retarded way to get center of block cause I couldn't think when I made this
 export const centerCoords = (blockCoords) => {
     return [blockCoords[0] + (Math.sign(blockCoords[0] === 1) ? -0.5 : 0.5), blockCoords[1], blockCoords[2] + (Math.sign(blockCoords[2] === 1) ? -0.5 : 0.5)]
+    // return [blockCoords[0] + 0.5, blockCoords[1], blockCoords[2] + 0.5]
 }
+
+const leftClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147116_af", null)
+leftClickMethod.setAccessible(true);
+
+export const leftClick = () => {
+    leftClickMethod.invoke(Client.getMinecraft(), null);
+}
+
+
+let distance
+export const pearlClip = (dist) => {
+    distance = Math.abs(dist)
+    const success = swapFromName("Ender Pearl")
+    if (!success) return
+
+    sendAirClick()
+    pearlclip.register()
+}
+
+const pearlclip = register("packetReceived", (packet) => {
+    pearlclip.unregister()
+    chat(`Pearlclipped ${distance} blocks down.`)
+    Client.scheduleTask(0, () => Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()) - distance, Math.floor(Player.getZ()) + 0.5))
+}).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
+
+export const sendAirClick = () => Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))

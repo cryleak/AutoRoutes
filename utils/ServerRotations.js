@@ -1,3 +1,6 @@
+import { sendAirClick, rotate } from "./utils"
+import Settings from "../config"
+
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const C05PacketPlayerLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C05PacketPlayerLook")
 const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook")
@@ -50,6 +53,7 @@ export const clickAt = (y, p) => {
     pitch = parseFloat(p)
     if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat("Invalid rotation! How is this possible?")
 
+    if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
     rotating = true
     clicking = true
 }
@@ -61,5 +65,5 @@ export const ignoreNextC06Packet = () => {
 const airClick = () => {
     // ChatLib.chat(Date.now() - lastTP); lastTP = Date.now()
     clicking = false
-    Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
+    sendAirClick()
 }

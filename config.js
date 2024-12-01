@@ -15,8 +15,22 @@ config
     })
     .addSwitch({
         configName: "displayIndex",
-        title: "Display index of rings on screen",
-        description: "Helpful for deleting and editing rings.",
+        title: "Display index of nodes on screen",
+        description: "Helpful for deleting and editing nodes.",
+        category: "Main",
+        subcategory: "AutoRoutes"
+    })
+    .addSwitch({
+        configName: "editMode",
+        title: "Edit Mode",
+        description: "Prevents nodes from triggering.",
+        category: "Main",
+        subcategory: "AutoRoutes"
+    })
+    .addSwitch({
+        configName: "rotateOnServerRotate",
+        title: "Rotate",
+        description: "Rotates on nodes that use Server Rotations so you can see where it is looking visually.",
         category: "Main",
         subcategory: "AutoRoutes"
     })
