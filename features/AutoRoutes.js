@@ -13,7 +13,6 @@ import addListener from "../events/SecretListener"
 let activeNodes = []
 let activeNodesCoords = []
 let moveKeyListener = false
-const renderManager = Client.getMinecraft().func_175598_ae()
 
 register("renderWorld", () => {
     if (!Settings().autoRoutesEnabled) return
@@ -25,7 +24,7 @@ register("renderWorld", () => {
         else RenderLibV2.drawCyl(...extraRingData.position, ring.radius, ring.radius, -0.01, 120, 1, 90, 0, 0, 1, 1, 1, 1, false, true)
         if (ring.type === "etherwarp") {
             let etherCoords = centerCoords(convertFromRelative(ring.etherBlock))
-            drawLine3d(...extraRingData.position, etherCoords[0], etherCoords[1] + 1, etherCoords[2], 0, 1, 1, 1, 10, false)
+            drawLine3d(extraRingData.position[0], extraRingData.position[1], extraRingData.position[2], etherCoords[0], etherCoords[1] + 1, etherCoords[2], 0, 1, 1, 1, 10, false)
         }
         if (Settings().displayIndex) Tessellator.drawString(`index: ${i}, type: ${ring.type}`, ...extraRingData.position, 16777215, true, 0.02, false)
     }
@@ -55,7 +54,13 @@ const performActions = () => {
             extraRingData.triggered = true
             let exec = () => {
                 releaseMovementKeys()
-                ringActions[ring.type](ring, Object.keys(ring))
+                let execRing = () => ringActions[ring.type](ring, Object.keys(ring))
+                ring.delay ? Async.schedule(() => {
+                    playerPosition = playerCoords().player
+                    let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
+                    if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) Client.scheduleTask(0, execRing)
+                }, ring.delay)
+                    : execRing() // Delay if there is a delay set
             }
 
             if (Object.values(ring.awaitSecret).some(value => value === true)) {
@@ -65,9 +70,9 @@ const performActions = () => {
                     addListener(ring.awaitSecret, () => resolve(Date.now() - startTime), () => reject("hi"))
                 }).then(value => {
                     chat("Secret took" + value)
-                    playerPosition = [...playerCoords().camera]
+                    playerPosition = playerCoords().player
                     let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
-                    if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) exec()
+                    if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) Client.scheduleTask(0, exec)
                 }, // Nice linter VS Code
                     e => {
                         chat("Await secret timed out!")

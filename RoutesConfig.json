@@ -1,67 +1,76 @@
 {
     "profiles": {
         "RetardedProfile": {
+            "Entrance": [
+                {
+                    "type": "etherwarp",
+                    "position": [
+                        18.870151012475404,
+                        69,
+                        10.581668326761374
+                    ],
+                    "radius": 0.7,
+                    "awaitSecret": {},
+                    "height": "0.1",
+                    "delay": 999,
+                    "etherBlock": [
+                        12,
+                        68,
+                        10
+                    ]
+                }
+            ],
             "Fairy": [
                 {
                     "type": "etherwarp",
                     "position": [
-                        -12.682650724574074,
+                        -7.894679870096553,
                         68,
-                        -25.557579267542337
+                        -15.397241736906722
                     ],
                     "radius": 0.7,
                     "awaitSecret": {},
                     "height": "0.1",
+                    "delay": 900,
                     "etherBlock": [
-                        -12,
+                        -4,
                         67,
-                        -22
+                        -15
                     ]
                 },
                 {
                     "type": "etherwarp",
                     "position": [
-                        -12.5,
+                        -4.689514539868355,
                         68,
-                        -22.5
+                        -15.552074726552618
                     ],
                     "radius": 0.7,
                     "awaitSecret": {},
                     "height": "0.1",
+                    "delay": 0,
                     "etherBlock": [
-                        -15,
-                        67,
-                        -22
+                        -11,
+                        69,
+                        -20
                     ]
                 },
                 {
                     "type": "etherwarp",
                     "position": [
-                        -15.63024202054487,
-                        68,
-                        -22.46644740758751
+                        -11.5,
+                        70,
+                        -20.5
                     ],
                     "radius": 0.7,
                     "awaitSecret": {},
                     "height": "0.1",
+                    "delay": 0,
                     "etherBlock": [
-                        -17,
+                        -8,
                         67,
-                        -22
+                        -15
                     ]
-                },
-                {
-                    "type": "finish",
-                    "position": [
-                        -17.573453673365094,
-                        68,
-                        -22.41835992464958
-                    ],
-                    "radius": 0.7,
-                    "awaitSecret": {},
-                    "height": "0.1",
-                    "yaw": -272.5491943359375,
-                    "pitch": "43.66958999633789"
                 }
             ]
         }

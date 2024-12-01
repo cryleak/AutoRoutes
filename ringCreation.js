@@ -13,7 +13,8 @@ export const configNames = [
     "awaitSecretBat",
     "awaitSecretChest",
     "awaitSecretEssence",
-    "awaitSecretItem"
+    "awaitSecretItem",
+    "delay"
 ]
 
 
@@ -85,6 +86,13 @@ config
             }
         ],
     })
+    .addTextInput({
+        configName: "delay",
+        title: "Ring Delay",
+        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.",
+        category: "Ring"
+    })
+
 
 const ringCreationGUI = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => ringCreationGUI.settings

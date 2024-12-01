@@ -15,22 +15,22 @@
             {
                 "type": 7,
                 "name": "type",
-                "value": 3
+                "value": 1
             },
             {
                 "type": 4,
                 "name": "yaw",
-                "value": "-92.5491943359375"
+                "value": "14.850738525390625"
             },
             {
                 "type": 4,
                 "name": "pitch",
-                "value": "43.66958999633789"
+                "value": "35.85010528564453"
             },
             {
                 "type": 4,
                 "name": "etherBlock",
-                "value": "-149,67,-82"
+                "value": "-164,67,-121"
             },
             {
                 "type": 8,
@@ -49,6 +49,11 @@
                         "name": "awaitSecretItem"
                     }
                 ]
+            },
+            {
+                "type": 4,
+                "name": "delay",
+                "value": "900"
             }
         ]
     }

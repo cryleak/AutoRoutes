@@ -6,13 +6,14 @@ import { getDistance3D, isValidEtherwarpBlock, raytraceBlocks } from "../../Bloo
 import Vector3 from "../../BloomCore/utils/Vector3";
 
 let editingCoords = null
+let editingRingIndex
 
 if (!data.profiles["RetardedProfile"]) {
     data.profiles["RetardedProfile"] = {}
 }
 
 ringCreation().getConfig().onCloseGui(() => {
-    if (editingCoords) addRing(ringCreation(), editingCoords)
+    if (editingCoords) addRing(ringCreation(), editingCoords, editingRingIndex)
     else addRing(ringCreation())
 })
 
@@ -28,6 +29,7 @@ register("command", () => {
     config.setConfigValue("Ring", "awaitSecretChest", false)
     config.setConfigValue("Ring", "awaitSecretEssence", false)
     config.setConfigValue("Ring", "awaitSecretItem", false)
+    config.setConfigValue("Ring", "delay", 0)
 
 
 
@@ -47,6 +49,7 @@ register("command", (index) => {
     else nearestRingIndex = getNearestRingIndex()
 
     const ring = roomNodes[nearestRingIndex]
+    editingRingIndex = nearestRingIndex
     editingCoords = convertFromRelative(ring.position)
 
 
@@ -57,11 +60,13 @@ register("command", (index) => {
     config.setConfigValue("Ring", "yaw", convertToRealYaw(ring.yaw) ?? Player.getYaw().toString())
     config.setConfigValue("Ring", "pitch", ring.pitch ?? Player.getPitch().toString())
     const prediction = raytraceBlocks([Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ()], Vector3.fromPitchYaw(Player.getPitch(), Player.getYaw()), 60, isValidEtherwarpBlock, true, true) ?? "0,0,0"
-    config.setConfigValue("Ring", "etherBlock", ring.etherBlock ?? prediction)
+    const etherBlock = convertFromRelative(ring.etherBlock) ?? prediction
+    config.setConfigValue("Ring", "etherBlock", etherBlock.toString())
     config.setConfigValue("Ring", "awaitSecretBat", ring.awaitSecret.bat)
     config.setConfigValue("Ring", "awaitSecretChest", ring.awaitSecret.chest)
     config.setConfigValue("Ring", "awaitSecretEssence", ring.awaitSecret.essence)
     config.setConfigValue("Ring", "awaitSecretItem", ring.awaitSecret.item)
+    config.setConfigValue("Ring", "delay", ring.delay)
 
     ringCreation().getConfig().openGui()
     roomNodes.splice(nearestRingIndex, 1)
@@ -85,7 +90,7 @@ register("command", (index) => {
     ChatLib.command("updateroutes", true)
 }).setName("removering")
 
-function addRing(args, position) {
+function addRing(args, position, ringIndex) {
     if (!position) position = [Player.getX(), Player.getY(), Player.getZ()]
     const ringType = ringTypes[parseInt(args.type)]
     if (!ringType) return
@@ -103,15 +108,18 @@ function addRing(args, position) {
         item: args.awaitSecretItem
     }
 
-    if (ringType === "etherwarp" && !editingCoords) args.etherBlock = convertToRelative(args.etherBlock.split(",").map(coord => Math.floor(parseFloat(coord))))
+    if (ringType === "etherwarp") {
+        args.etherBlock = convertToRelative(args.etherBlock.split(",").map(coord => Math.floor(parseFloat(coord))))
+    }
     else if (["look", "walk", "finish"].includes(ringType)) args.yaw = convertToRelativeYaw(args.yaw)
 
 
-    let ring = { type: ringType, position: convertToRelative(position), radius: parseFloat(args.radius), awaitSecret: awaitSecretState, height: args.height }
+    let ring = { type: ringType, position: convertToRelative(position), radius: parseFloat(args.radius), awaitSecret: awaitSecretState, height: args.height, delay: parseInt(args.delay) }
     for (let i = 0; i < ringSpecificArgs.length; i++) {
         ring[ringSpecificArgs[i]] = args[ringSpecificArgs[i]]
     }
-    data.profiles[data.selectedProfile][roomName].push(ring)
+    if (ringIndex || ringIndex === 0) data.profiles[data.selectedProfile][roomName].splice(ringIndex, 0, ring)
+    else data.profiles[data.selectedProfile][roomName].push(ring)
     data.save()
     let ringString = "Added ring: "
     const propertyNames = Object.getOwnPropertyNames(ring)
