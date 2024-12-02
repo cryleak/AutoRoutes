@@ -1,10 +1,21 @@
 import Settings from "../config"
 import ringCreation from "../ringCreation"
-import { convertToRelative, convertFromRelative, getRoomName, chat, ringTypes, availableArgs, playerCoords, convertToRelativeYaw, convertToRealYaw, setWalking, centerCoords } from "../utils/utils"
+import { convertToRelative, convertFromRelative, getRoomName, chat, playerCoords, convertToRelativeYaw, convertToRealYaw, getEyeHeightSneaking } from "../utils/utils"
 import { data } from "../utils/routesData"
 import { getDistance3D, isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
 import Vector3 from "../../BloomCore/utils/Vector3";
 
+const ringTypes = ["look", "etherwarp", "aotv", "hype", "walk", "finish", "superboom", "pearlclip"]
+const availableArgs = new Map([
+    ["look", ["yaw", "pitch"]],
+    ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
+    ["aotv", ["yaw", "pitch"]],
+    ["hype", ["yaw", "pitch"]],
+    ["walk", ["yaw", "pitch"]],
+    ["finish", ["yaw", "pitch"]],
+    ["superboom", ["yaw", "pitch"]],
+    ["pearlclip", ["pearlClipDistance"]]
+])
 let editingCoords = null
 let editingRingIndex
 
@@ -24,7 +35,7 @@ register("command", () => {
     config.setConfigValue("Ring", "stop", false)
     config.setConfigValue("Ring", "yaw", Player.getYaw().toFixed(3))
     config.setConfigValue("Ring", "pitch", Player.getPitch().toFixed(3))
-    const prediction = raytraceBlocks([Player.getX(), Player.getY() + 1.5399999618530273, Player.getZ()], Vector3.fromPitchYaw(Player.getPitch(), Player.getYaw()), 60, isValidEtherwarpBlock, true, true) ?? "0,0,0"
+    const prediction = raytraceBlocks([Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()], Vector3.fromPitchYaw(Player.getPitch(), Player.getYaw()), 60, isValidEtherwarpBlock, true, true) ?? "0,0,0"
     config.setConfigValue("Ring", "etherBlock", prediction.toString())
     config.setConfigValue("Ring", "awaitSecretBat", false)
     config.setConfigValue("Ring", "awaitSecretChest", false)
@@ -39,18 +50,21 @@ register("command", () => {
     ringCreation().getConfig().openGui()
 }).setName("createring")
 
-register("command", (index) => {
+register("command", (...args) => {
     const roomNodes = data.profiles[data.selectedProfile][getRoomName()]
     if (!roomNodes || !roomNodes.length) return chat("No nodes found for this room!")
 
     let nearestRingIndex
-    if (index) {
-        if (isNaN(index)) return chat("Not a number!")
-        nearestRingIndex = parseInt(index)
+    let yaw
+    if (args.length) {
+        const index = args.shift()
+        if (!isNaN(index)) nearestRingIndex = parseInt(index)
+        else if (args.some(arg => arg.includes("resetrot"))) yaw = Player.getYaw().toFixed(3)
     }
-    else nearestRingIndex = getNearestRingIndex()
+    if (!nearestRingIndex) nearestRingIndex = getNearestRingIndex()
 
     const ring = roomNodes[nearestRingIndex]
+    if (!yaw) yaw = (convertToRealYaw(ring.yaw) ?? Player.getYaw()).toFixed(3)
     editingRingIndex = nearestRingIndex
     editingCoords = convertFromRelative(ring.position)
 
@@ -60,9 +74,9 @@ register("command", (index) => {
     config.setConfigValue("Ring", "radius", ring.radius)
     config.setConfigValue("Ring", "height", ring.height)
     config.setConfigValue("Ring", "type", ringTypes.indexOf(ring.type))
-    config.setConfigValue("Ring", "yaw", (convertToRealYaw(ring.yaw) ?? Player.getYaw()).toFixed(3))
+    config.setConfigValue("Ring", "yaw", yaw)
     config.setConfigValue("Ring", "pitch", (parseFloat(ring.pitch) ?? Player.getPitch()).toFixed(3))
-    const prediction = raytraceBlocks([Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ()], Vector3.fromPitchYaw(Player.getPitch(), Player.getYaw()), 60, isValidEtherwarpBlock, true, true) ?? "0,0,0"
+    const prediction = raytraceBlocks([Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()], Vector3.fromPitchYaw(Player.getPitch(), Player.getYaw()), 60, isValidEtherwarpBlock, true, true) ?? "0,0,0"
     const etherBlock = convertFromRelative(ring.etherBlock) ?? prediction
     config.setConfigValue("Ring", "etherCoordMode", ring.etherCoordMode)
     config.setConfigValue("Ring", "etherBlock", etherBlock.toString())
@@ -115,7 +129,7 @@ function addRing(args, position, ringIndex) {
 
     if (ringType === "etherwarp") args.etherBlock = convertToRelative(args.etherBlock.split(",").map(coord => Math.floor(parseFloat(coord))))
 
-    else if (["look", "etherwarp", "aotv", "hype", "walk", "finish", "superboom"].includes(ringType)) args.yaw = convertToRelativeYaw(args.yaw)
+    if (["look", "etherwarp", "aotv", "hype", "walk", "finish", "superboom"].includes(ringType)) args.yaw = convertToRelativeYaw(args.yaw)
 
 
     let position = convertToRelative(position)

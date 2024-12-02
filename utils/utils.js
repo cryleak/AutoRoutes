@@ -2,21 +2,11 @@
 // Thank you gekke (why do i need to put INSTANCE in the java class name)
 
 import Vector3 from '../../BloomCore/utils/Vector3.js';
+import Settings from "../config"
 
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils")
 const renderManager = Client.getMinecraft().func_175598_ae()
 
-export const ringTypes = ["look", "etherwarp", "aotv", "hype", "walk", "finish", "superboom", "pearlclip"]
-export const availableArgs = new Map([
-    ["look", ["yaw", "pitch"]],
-    ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
-    ["aotv", ["yaw", "pitch"]],
-    ["hype", ["yaw", "pitch"]],
-    ["walk", ["yaw", "pitch"]],
-    ["finish", ["yaw", "pitch"]],
-    ["superboom", ["yaw", "pitch"]],
-    ["pearlclip", ["pearlClipDistance"]]
-])
 const rotationNumber = new Map([
     ["NORTH", 0],
     ["WEST", -1],
@@ -58,7 +48,6 @@ export const convertFromRelative = (relativeCoord) => {
 export const convertToRealYaw = (yaw) => {
     const currRoom = dungeonUtils.INSTANCE.currentRoom;
     const roomRotation = currRoom.rotation;
-    if (isNaN(yaw)) return null
     return parseFloat(yaw) + (parseFloat(rotationNumber.get(roomRotation.toString())) * 90)
 }
 
@@ -157,10 +146,9 @@ export const playerCoords = () => {
 export const calcYawPitch = (x, y, z, sneaking = false) => {
     let d = {
         x: x - Player.getX(),
-        y: y - (Player.getY() + 1.6200000047683716),
+        y: y - (Player.getY() + (sneaking ? getEyeHeightSneaking() : getEyeHeight())),
         z: z - Player.getZ()
     }
-    if (sneaking) d.y -= 0.08000004291534424
     let yaw = 0
     let pitch = 0
     if (d.x != 0) {
@@ -196,7 +184,7 @@ register("packetSent", (packet, event) => {
     if (action == C0BPacketEntityAction.Action.START_SNEAKING) {
         if (sneaking) cancel(event)
         else {
-            // ChatLib.chat(Date.now() - lastTrigger)
+            debugMessage(`Last sneak packet was ${Date.now() - lastTrigger}ms ago`)
             lastTrigger = Date.now()
         }
         sneaking = true
@@ -204,7 +192,7 @@ register("packetSent", (packet, event) => {
     if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) {
         if (!sneaking) cancel(event)
         else {
-            // ChatLib.chat(Date.now() - lastTrigger)
+            debugMessage(`Last sneak packet was ${Date.now() - lastTrigger}ms ago`)
             lastTrigger = Date.now()
         }
         sneaking = false
@@ -215,15 +203,24 @@ register("packetSent", (packet, event) => {
 
 register("worldUnload", () => sneaking = false)
 
-export const movementKeys = [
+export const WASDKeys = [
     Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),
     Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
     Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
     Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i()
 ]
 
-export const releaseMovementKeys = () => movementKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, false))
-export const repressMovementKeys = () => movementKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, Keyboard.isKeyDown(keybind)))
+export const movementKeys = [
+    Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i()
+]
+
+export const releaseMovementKeys = () => WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, false))
+export const repressMovementKeys = () => WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, Keyboard.isKeyDown(keybind)))
 
 //Retarded way to get center of block cause I couldn't think when I made this
 export const centerCoords = (blockCoords) => {
@@ -240,19 +237,35 @@ export const leftClick = () => {
 
 
 let distance
-export const pearlClip = (dist) => {
+export const registerPearlClip = (dist) => {
     distance = Math.abs(dist)
-    const success = swapFromName("Ender Pearl")
-    if (!success) return
-
-    sendAirClick()
     pearlclip.register()
 }
 
-const pearlclip = register("packetReceived", (packet) => {
-    pearlclip.unregister()
-    chat(`Pearlclipped ${distance} blocks down.`)
-    Client.scheduleTask(0, () => Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()) - distance, Math.floor(Player.getZ()) + 0.5))
+const pearlclip = register("packetReceived", (packet, event) => {
+    Client.scheduleTask(0, () => {
+        if (event?.isCancelled()) return
+        pearlclip.unregister()
+        chat(`Pearlclipped ${distance} blocks down.`)
+        Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()) - distance, Math.floor(Player.getZ()) + 0.5)
+    })
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
 
 export const sendAirClick = () => Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
+
+let id = 100
+export function debugMessage(message) {
+    if (!Settings().debugMessages) return
+    id++
+    const currentID = id
+    new Message("§0[§6AutoRoutesDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor)).setChatLineId(currentID).chat()
+    Client.scheduleTask(20, () => ChatLib.clearChat(currentID))
+}
+
+export const getEyeHeightSneaking = () => { // Peak schizo
+    return 1.5399999618530273
+}
+
+export const getEyeHeight = () => {
+    return Player.getPlayer().func_70047_e()
+}

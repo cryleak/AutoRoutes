@@ -36,7 +36,7 @@ config
     .addDropDown({
         configName: "etherCoordMode",
         title: "Etherwarp Coordinate Mode",
-        description: "Yaw/Pitch may be required for some TPs from specific spots.",
+        description: "Yaw/Pitch may be required for some TPs from specific spots. Coordinate mode may also be very laggy on worse computers.",
         category: "Ring",
         options: ["Coordinate", "Yaw/Pitch"],
         value: 0,
@@ -78,7 +78,7 @@ config
                 configName: "awaitSecretChest",
             },
             {
-                title: "Essence",
+                title: "Skull (and essence)",
                 configName: "awaitSecretEssence",
             },
             {

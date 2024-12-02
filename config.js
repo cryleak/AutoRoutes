@@ -34,6 +34,14 @@ config
         category: "Main",
         subcategory: "AutoRoutes"
     })
+    .addSwitch({
+        configName: "debugMessages",
+        title: "Debug",
+        description: "Prints debug messages in chat. Recomended to use right now while AutoRoutes aren't perfect.",
+        category: "Main",
+        subcategory: "AutoRoutes",
+        value: true
+    })
 
 const mySettings = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => mySettings.settings

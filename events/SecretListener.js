@@ -1,6 +1,7 @@
 import Async from "../../Async"
 import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
 
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
 
 const listeners = []
@@ -37,7 +38,7 @@ register("packetSent", (packet, event) => { // Chest open listener
             listener.successExecute()
         }
     }
-}).setFilteredClass(net.minecraft.network.play.client.C08PacketPlayerBlockPlacement)
+}).setFilteredClass(C08PacketPlayerBlockPlacement)
 
 register("packetSent", (packet, event) => { // Wither essence listener. Detects all skulls but who cares. It shouldn't matter.
     const position = new BlockPos(packet.func_179724_a())
@@ -51,7 +52,7 @@ register("packetSent", (packet, event) => { // Wither essence listener. Detects 
             listener.successExecute()
         }
     }
-}).setFilteredClass(net.minecraft.network.play.client.C08PacketPlayerBlockPlacement)
+}).setFilteredClass(C08PacketPlayerBlockPlacement)
 
 register("packetReceived", (packet, event) => { // Bat death listener
     const name = packet.func_149212_c();

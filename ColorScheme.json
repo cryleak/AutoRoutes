@@ -1,12 +1,11 @@
 {
-    "$schema": "https://raw.githubusercontent.com/DocilElm/Amaterasu/main/ColorScheme.schema.json",
     "Button": {
         "background": {
             "color": [
-                0,
-                0,
-                0,
-                80
+                52,
+                76,
+                235,
+                255
             ],
             "outlineColor": [
                 255,
@@ -40,10 +39,10 @@
     "Button1": {
         "background": {
             "color": [
-                0,
-                0,
-                0,
-                0
+                255,
+                255,
+                255,
+                80
             ],
             "outlineColor": [
                 255,
@@ -56,9 +55,9 @@
         },
         "lines": {
             "color": [
-                0,
-                0,
-                0,
+                255,
+                255,
+                255,
                 80
             ],
             "roundness": 3
@@ -74,9 +73,9 @@
             "format": "",
             "centered": false,
             "selectedColor": [
-                19,
-                117,
-                141,
+                52,
+                76,
+                235,
                 255
             ]
         },
@@ -102,10 +101,10 @@
         },
         "mouseLeaveAnimation": {
             "color": [
-                0,
-                0,
-                0,
-                0
+                50,
+                50,
+                50,
+                80
             ],
             "type": "OUT_EXP",
             "time": 0.5
@@ -114,9 +113,9 @@
     "TextInput": {
         "background": {
             "color": [
-                0,
-                0,
-                0,
+                155,
+                155,
+                155,
                 80
             ],
             "outlineColor": [
@@ -135,14 +134,14 @@
                 255,
                 255
             ],
+            "scale": 1,
+            "padding": 3,
             "placeholderColor": [
                 170,
                 170,
                 170,
                 255
-            ],
-            "scale": 1,
-            "padding": 3
+            ]
         },
         "mouseEnterAnimation": {
             "color": [
@@ -151,14 +150,14 @@
                 0,
                 80
             ],
+            "type": "OUT_EXP",
+            "time": 0.5,
             "placeholderColor": [
                 170,
                 170,
                 170,
                 80
-            ],
-            "type": "OUT_EXP",
-            "time": 0.5
+            ]
         },
         "mouseLeaveAnimation": {
             "color": [
@@ -167,14 +166,14 @@
                 255,
                 255
             ],
+            "type": "OUT_EXP",
+            "time": 0.5,
             "placeholderColor": [
                 170,
                 170,
                 170,
                 255
-            ],
-            "type": "OUT_EXP",
-            "time": 0.5
+            ]
         }
     },
     "Checkbox": {
@@ -212,15 +211,15 @@
     "Switch": {
         "background": {
             "enabledColor": [
-                255,
-                255,
-                255,
-                80
+                52,
+                76,
+                235,
+                255
             ],
             "disabledColor": [
-                0,
-                0,
-                0,
+                155,
+                155,
+                155,
                 80
             ],
             "outlineColor": [
@@ -234,16 +233,16 @@
         },
         "switchbox": {
             "enabledColor": [
-                0,
-                0,
-                0,
-                80
+                255,
+                255,
+                255,
+                188
             ],
             "disabledColor": [
-                0,
-                0,
-                0,
-                80
+                255,
+                255,
+                255,
+                188
             ],
             "outlineColor": [
                 255,
@@ -294,10 +293,10 @@
         },
         "completionbar": {
             "color": [
-                140,
-                140,
-                140,
-                80
+                52,
+                76,
+                235,
+                255
             ],
             "outlineColor": [
                 255,
@@ -357,9 +356,9 @@
     "Selection": {
         "background": {
             "color": [
-                0,
-                0,
-                0,
+                155,
+                155,
+                155,
                 80
             ],
             "outlineColor": [
@@ -508,9 +507,9 @@
         "TextInput": {
             "background": {
                 "color": [
-                    0,
-                    0,
-                    0,
+                    155,
+                    155,
+                    155,
                     80
                 ],
                 "outlineColor": [
@@ -529,14 +528,14 @@
                     255,
                     255
                 ],
+                "scale": 1,
+                "padding": 5,
                 "placeholderColor": [
                     170,
                     170,
                     170,
                     255
-                ],
-                "scale": 1,
-                "padding": 5
+                ]
             },
             "mouseEnterAnimation": {
                 "color": [
@@ -545,14 +544,14 @@
                     0,
                     80
                 ],
+                "type": "OUT_EXP",
+                "time": 0.5,
                 "placeholderColor": [
                     170,
                     170,
                     170,
                     80
-                ],
-                "type": "OUT_EXP",
-                "time": 0.5
+                ]
             },
             "mouseLeaveAnimation": {
                 "color": [
@@ -561,14 +560,14 @@
                     255,
                     255
                 ],
+                "type": "OUT_EXP",
+                "time": 0.5,
                 "placeholderColor": [
                     170,
                     170,
                     170,
                     255
-                ],
-                "type": "OUT_EXP",
-                "time": 0.5
+                ]
             }
         },
         "Slider": {
@@ -724,10 +723,10 @@
     "DropDown": {
         "background": {
             "color": [
-                0,
-                0,
-                0,
-                0
+                155,
+                155,
+                155,
+                255
             ],
             "outlineColor": [
                 255,
@@ -743,7 +742,7 @@
                 0,
                 0,
                 0,
-                80
+                0
             ],
             "outlineColor": [
                 255,
@@ -776,10 +775,10 @@
         },
         "dropdownbackground": {
             "color": [
-                0,
-                0,
-                0,
-                80
+                155,
+                155,
+                155,
+                155
             ],
             "outlineColor": [
                 255,
@@ -795,7 +794,7 @@
                 0,
                 0,
                 0,
-                80
+                160
             ],
             "outlineColor": [
                 255,
@@ -819,10 +818,10 @@
     "MultiCheckBox": {
         "background": {
             "color": [
-                0,
-                0,
-                0,
-                0
+                155,
+                155,
+                155,
+                255
             ],
             "outlineColor": [
                 255,
@@ -838,7 +837,7 @@
                 0,
                 0,
                 0,
-                80
+                0
             ],
             "outlineColor": [
                 255,
@@ -871,10 +870,10 @@
         },
         "dropdownbackground": {
             "color": [
-                0,
-                0,
-                0,
-                80
+                155,
+                155,
+                155,
+                155
             ],
             "outlineColor": [
                 255,
@@ -890,7 +889,7 @@
                 0,
                 0,
                 0,
-                80
+                160
             ],
             "outlineColor": [
                 255,
@@ -915,7 +914,7 @@
                 0,
                 0,
                 0,
-                80
+                0
             ],
             "outlineColor": [
                 255,
@@ -938,10 +937,10 @@
         "Checkbox": {
             "background": {
                 "enabledColor": [
-                    255,
-                    255,
-                    255,
-                    80
+                    52,
+                    76,
+                    235,
+                    255
                 ],
                 "disabledColor": [
                     0,
@@ -1002,7 +1001,7 @@
                 0,
                 0,
                 0,
-                80
+                140
             ],
             "outlineColor": [
                 255,
@@ -1068,6 +1067,7 @@
                 0,
                 80
             ],
+            "size": 0.5,
             "outlineColor": [
                 255,
                 255,
@@ -1113,7 +1113,6 @@
                 255,
                 80
             ],
-            "size": 0.5,
             "outlineColor": [
                 255,
                 255,
@@ -1121,7 +1120,8 @@
                 255
             ],
             "outlineSize": 0,
-            "roundness": 3
+            "roundness": 3,
+            "size": 0.5
         },
         "text": {
             "color": [
@@ -1132,5 +1132,6 @@
             ],
             "scale": 1
         }
-    }
+    },
+    "$schema": "https://raw.githubusercontent.com/DocilElm/Amaterasu/main/ColorScheme.schema.json"
 }

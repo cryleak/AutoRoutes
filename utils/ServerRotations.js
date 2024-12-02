@@ -1,4 +1,4 @@
-import { sendAirClick, rotate } from "./utils"
+import { sendAirClick, rotate, debugMessage } from "./utils"
 import Settings from "../config"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
@@ -63,7 +63,7 @@ export const ignoreNextC06Packet = () => {
 }
 
 const airClick = () => {
-    // ChatLib.chat(Date.now() - lastTP); lastTP = Date.now()
+    debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
     sendAirClick()
 }

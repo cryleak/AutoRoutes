@@ -1,6 +1,6 @@
 import Settings from "../config"
 import RenderLibV2 from "../../RenderLibV2"
-import { convertFromRelative, getRoomName, chat, playerCoords, swapFromName, calcYawPitch, rotate, setSneaking, setWalking, convertToRealYaw, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, pearlClip } from "../utils/utils"
+import { convertFromRelative, getRoomName, chat, playerCoords, swapFromName, calcYawPitch, rotate, setSneaking, setWalking, convertToRealYaw, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, getEyeHeightSneaking, movementKeys, debugMessage } from "../utils/utils"
 import { clickAt } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
 import { getDistance2D, isValidEtherwarpBlock, raytraceBlocks, drawLine3d } from "../../BloomCore/utils/utils"
@@ -22,7 +22,7 @@ register("renderWorld", () => {
         let extraRingData = activeNodesCoords[i]
         let ring = activeNodes[i]
         if (extraRingData.triggered || Date.now() - extraRingData.lastUse < 1000) RenderLibV2.drawCyl(...extraRingData.position, ring.radius, ring.radius, -0.01, 120, 1, 90, 0, 0, 1, 0, 0, 1, false, true)
-        else RenderLibV2.drawCyl(...extraRingData.position, ring.radius, ring.radius, -0.01, 120, 1, 90, 0, 0, 1, 1, 1, 1, false, true)
+        else RenderLibV2.drawCyl(...extraRingData.position, ring.radius, ring.radius, -0.01, 120, 1, 90, 0, 0, 0, 1, 1, 1, false, true)
         if (ring.type === "etherwarp") {
             let etherCoords = centerCoords(convertFromRelative(ring.etherBlock))
             drawLine3d(...extraRingData.position, etherCoords[0], etherCoords[1] + 1, etherCoords[2], 0, 1, 1, 1, 10, false)
@@ -158,7 +158,6 @@ const ringActions = {
         clickAt(yaw, pitch)
         moveKeyListener = true
         moveKeyCooldown = Date.now()
-        // rotate(yaw, pitch)
     },
     aotv: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
@@ -200,11 +199,12 @@ const ringActions = {
         } else leftClick()
     },
     pearlclip: (args) => {
-        pearlClip(args.pearlClipDistance)
+        const success = swapFromName("Ender Pearl")
+        if (!success) return
+        clickAt(0, 90)
+        registerPearlClip(args.pearlClipDistance)
     }
 }
-
-const movementKeys = [Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(), Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(), Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(), Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i()]
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
     if (!moveKeyListener) return
@@ -221,26 +221,42 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 })
 
 function getEtherYawPitch(etherBlock) {
-    const playerCoords = [Player.getX(), Player.getY() + 1.5399999618530273, Player.getZ()]
+    const playerCoords = [Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()]
 
     const centeredCoords = centerCoords(etherBlock)
     const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
     // Return if you can aim at center of the block
     if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === etherBlock[index])) return rotation
-    const lowerLimit = { yaw: rotation.yaw - 4, pitch: rotation.pitch - 4 }
-    const upperLimit = { yaw: rotation.yaw + 4, pitch: rotation.pitch + 4 }
-    let runs = 0
-    for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw += 1) {
-        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.5) {
-            runs++
+    const lowerLimit = { yaw: rotation.yaw - 4, pitch: rotation.pitch - 6 }
+    const upperLimit = { yaw: rotation.yaw + 4, pitch: rotation.pitch + 6 }
+    // let runs = 0
+    for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw++) {
+        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.3) {
+            // runs++
             let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
             if (!prediction) continue
             if (prediction.every((coord, index) => coord === etherBlock[index])) {
-                console.log(runs)
+                // console.log(runs)
                 return { yaw, pitch }
             }
         }
     }
-    console.log(runs)
+    // console.log(runs)
     return null
 }
+
+let packetsSent = 0
+register("packetSent", (packet, event) => {
+    Client.scheduleTask(0, () => {
+        if (event?.isCancelled()) return
+
+        packetsSent++
+    })
+}).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer)
+
+register("step", () => {
+    if (!Settings().debugMessages) return
+    ChatLib.clearChat(89299)
+    new Message(`§0[§6AutoRoutesDebug§0]§f Movement packets sent last second: ${packetsSent}`).setChatLineId(89299).chat()
+    packetsSent = 0
+}).setDelay(1)
