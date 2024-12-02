@@ -253,13 +253,9 @@ const pearlclip = register("packetReceived", (packet, event) => {
 
 export const sendAirClick = () => Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
 
-let id = 100
-export function debugMessage(message) {
+export function debugMessage(message, disappear = true) {
     if (!Settings().debugMessages) return
-    id++
-    const currentID = id
-    new Message("§0[§6AutoRoutesDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor)).setChatLineId(currentID).chat()
-    Client.scheduleTask(20, () => ChatLib.clearChat(currentID))
+    ChatLib.chat("§0[§6AutoRoutesDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 
 export const getEyeHeightSneaking = () => { // Peak schizo
@@ -268,4 +264,53 @@ export const getEyeHeightSneaking = () => { // Peak schizo
 
 export const getEyeHeight = () => {
     return Player.getPlayer().func_70047_e()
+}
+
+
+import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
+export function getEtherYawPitch(blockCoords) {
+    const playerCoords = [Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()]
+
+    const centeredCoords = centerCoords(blockCoords)
+    const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
+    // Return if you can aim at center of the block
+    if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) return rotation
+    const lowerLimit = { yaw: rotation.yaw - 4, pitch: rotation.pitch - 6 }
+    const upperLimit = { yaw: rotation.yaw + 4, pitch: rotation.pitch + 6 }
+    let runs = 0
+    for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw++) {
+        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.3) {
+            runs++
+            let prediction = rayTraceEtherBlock(playerCoords, yaw, pitch)
+            if (!prediction) continue
+            if (prediction.every((coord, index) => coord === blockCoords[index])) {
+                debugMessage(`Found Yaw/Pitch cominbation in ${runs} attempts!`, false)
+                return { yaw, pitch }
+            }
+        }
+    }
+    debugMessage(`Failed to find Yaw/Pitch combination. ${runs} attempts.`, false)
+    return null
+}
+
+import RenderLibV2 from "../../RenderLibV2/"
+
+export const renderBox = (pos, width, height, colors, isJavaColors) => {
+    if (isJavaColors) {
+        for (let i = 0; i < colors.length; i++) {
+            let trueColor = RenderLibV2.getColor(colors[i])
+            colors[i] = [trueColor.red, trueColor.green, trueColor.blue]
+        }
+    }
+
+    for (let i = 0; i < colors.length; i++) {
+        let yOffset = i * (1 / (colors.length - 1))
+        RenderLibV2.drawEspBoxV2(pos[0], pos[1] + 0.01 + height * yOffset, pos[2], width, 0.05, width, colors[i][0], colors[i][1], colors[i][2], 1, false)
+    }
+}
+
+import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
+
+export const rayTraceEtherBlock = (pos, yaw, pitch) => {
+    return raytraceBlocks(pos, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
 }

@@ -42,6 +42,59 @@ config
         subcategory: "AutoRoutes",
         value: true
     })
+    .addDropDown({
+        configName: "nodeColorPreset",
+        title: "Node Color Preset",
+        description: "Select an option",
+        category: "Visuals",
+        options: ["Trans", "Custom"],
+        value: 0
+    })
+    .addColorPicker({
+        configName: "nodeColor1",
+        title: "Node Color 1",
+        description: "",
+        category: "Visuals",
+        subcategory: "Node",
+        value: [255, 255, 255, 255],
+        shouldShow: data => data.nodeColorPreset === 1
+    })
+    .addColorPicker({
+        configName: "nodeColor2",
+        title: "Node Color 2",
+        description: "",
+        category: "Visuals",
+        subcategory: "Node",
+        value: [255, 255, 255, 255],
+        shouldShow: data => data.nodeColorPreset === 1
+    })
+    .addColorPicker({
+        configName: "nodeColor3",
+        title: "Node Color 3",
+        description: "",
+        category: "Visuals",
+        subcategory: "Node",
+        value: [255, 255, 255, 255],
+        shouldShow: data => data.nodeColorPreset === 1
+    })
+    .addColorPicker({
+        configName: "nodeColor4",
+        title: "Node Color 4",
+        description: "",
+        category: "Visuals",
+        subcategory: "Node",
+        value: [255, 255, 255, 255],
+        shouldShow: data => data.nodeColorPreset === 1
+    })
+    .addColorPicker({
+        configName: "nodeColor5",
+        title: "Node Color 5",
+        description: "",
+        category: "Visuals",
+        subcategory: "Node",
+        value: [255, 255, 255, 255],
+        shouldShow: data => data.nodeColorPreset === 1
+    })
 
 const mySettings = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => mySettings.settings

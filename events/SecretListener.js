@@ -7,11 +7,8 @@ const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.clie
 const listeners = []
 
 
-function addListener(types, successExec, failExec) {
-    const listener = {
-        listenerTypes: types,
-        successExecute: successExec,
-    }
+function addListener(successExec, failExec) {
+    const listener = () => successExec()
     listeners.push(listener)
     Async.schedule(() => {
         const index = listeners.indexOf(listener)
@@ -33,10 +30,8 @@ register("packetSent", (packet, event) => { // Chest open listener
     if (!["minecraft:chest", "minecraft:trapped_chest"].includes(blockName)) return
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
-        if (listener.types.chest) {
-            listeners.splice(i, 1)
-            listener.successExecute()
-        }
+        listeners.splice(i, 1)
+        listener()
     }
 }).setFilteredClass(C08PacketPlayerBlockPlacement)
 
@@ -47,10 +42,8 @@ register("packetSent", (packet, event) => { // Wither essence listener. Detects 
     if (blockName !== "minecraft:skull") return
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
-        if (listener.types.essence) {
-            listeners.splice(i, 1)
-            listener.successExecute()
-        }
+        listeners.splice(i, 1)
+        listener()
     }
 }).setFilteredClass(C08PacketPlayerBlockPlacement)
 
@@ -58,16 +51,14 @@ register("packetReceived", (packet, event) => { // Bat death listener
     const name = packet.func_149212_c();
     if (name !== "mob.bat.hurt") return
 
-    const soundPos = [packet.func_149207_d(), packet.func_149211_e(), packet.func_149210_f]
+    const soundPos = [packet.func_149207_d(), packet.func_149211_e(), packet.func_149210_f()]
 
     if (getDistanceToCoord(...soundPos, true) > 25) return
 
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
-        if (listener.types.bat) {
-            listeners.splice(i, 1)
-            listener.successExecute()
-        }
+        listeners.splice(i, 1)
+        listener()
     }
 }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
 
@@ -87,11 +78,10 @@ register("tick", () => { // Schizo solution for item pickup listener
 
         for (let i = 0; i < listeners.length; i++) {
             let listener = listeners[i]
-            if (listener.types.item) {
-                listeners.splice(i, 1)
-                listener.successExecute()
-            }
+            listeners.splice(i, 1)
+            listener()
         }
+        return
 
     }
     entitiesLastTick = itemEntities
@@ -107,7 +97,7 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
         listeners.splice(i, 1)
-        listener.successExecute()
+        listener()
     }
 
 })

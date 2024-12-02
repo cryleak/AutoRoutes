@@ -30,8 +30,22 @@ config
         title: "Ring type",
         description: "Select an option",
         category: "Ring",
-        options: ["Look", "Etherwarp", "AOTV", "Hyperion", "Walk", "Finish Route", "Superboom", "Pearl VClip"],
+        options: ["Look", "Etherwarp", "Use Item", "Walk", "Finish Route", "Superboom", "Pearl VClip"],
         value: 0
+    })
+    .addTextInput({
+        configName: "itemName",
+        title: "Item name to use",
+        description: "",
+        category: "Ring",
+        shouldShow: data => data.type === 2
+    })
+    .addSwitch({
+        configName: "stopSneaking",
+        title: "Stop sneaking",
+        description: "",
+        category: "Ring",
+        shouldShow: data => data.type === 2
     })
     .addDropDown({
         configName: "etherCoordMode",
@@ -47,14 +61,14 @@ config
         title: "Yaw",
         description: "Number between -180 and 180.",
         category: "Ring",
-        shouldShow: data => data.type === 0 || data.type === 2 || data.type === 3 || data.type === 4 || data.type === 5 || data.type === 6 || data.etherCoordMode === 1 && data.type === 1
+        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4 || data.type === 5
     })
     .addTextInput({
         configName: "pitch",
         title: "Pitch",
         description: "Number between -180 and 180.",
         category: "Ring",
-        shouldShow: data => data.type === 0 || data.type === 2 || data.type === 3 || data.type === 4 || data.type === 5 || data.type === 6 || data.etherCoordMode === 1 && data.type === 1
+        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4 || data.type === 5
     })
     .addTextInput({
         configName: "etherBlock",
@@ -63,34 +77,10 @@ config
         category: "Ring",
         shouldShow: data => data.type === 1 && data.etherCoordMode === 0
     })
-    .addMultiCheckbox({
-        configName: "awaitSecretTypes",
-        title: "Types of secrets to await. Uncheck all to disable.",
+    .addSwitch({
+        configName: "awaitSecret",
+        title: "Await secrets and skulls (such as redstone skull).",
         description: "",
-        category: "Ring",
-        options: [
-            {
-                title: "Bat",
-                configName: "awaitSecretBat",
-            },
-            {
-                title: "Chest",
-                configName: "awaitSecretChest",
-            },
-            {
-                title: "Skull (and essence)",
-                configName: "awaitSecretEssence",
-            },
-            {
-                title: "Item",
-                configName: "awaitSecretItem",
-            }
-        ],
-    })
-    .addTextInput({
-        configName: "delay",
-        title: "Ring Delay",
-        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.",
         category: "Ring"
     })
     .addTextInput({
@@ -98,9 +88,26 @@ config
         title: "Pearl VClip Distance",
         description: "How many blocks to clip down.",
         category: "Ring",
-        shouldShow: data => data.type === 5
+        shouldShow: data => data.type === 6
+    })
+    .addTextInput({
+        configName: "delay",
+        title: "Ring Delay",
+        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.",
+        category: "Ring"
     })
 
 
 const ringCreationGUI = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => ringCreationGUI.settings
+
+export const ringTypes = ["look", "etherwarp", "useItem", "walk", "finish", "superboom", "pearlclip"]
+export const availableArgs = new Map([
+    ["look", ["yaw", "pitch"]],
+    ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
+    ["useItem", ["yaw", "pitch", "itemName", "stopSneaking"]],
+    ["walk", ["yaw", "pitch"]],
+    ["finish", ["yaw", "pitch"]],
+    ["superboom", ["yaw", "pitch"]],
+    ["pearlclip", ["pearlClipDistance"]]
+])

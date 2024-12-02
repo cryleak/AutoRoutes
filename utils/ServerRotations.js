@@ -15,6 +15,8 @@ let ignoreNextC06 = false
 let ignoreNextC06NoS08 = false
 let lastS08Event
 let sending = false
+let ticksPassed = 0
+let tickDelay = 0
 
 register("packetSent", (packet, event) => {
     const simpleName = packet.class.getSimpleName()
@@ -36,6 +38,8 @@ register("packetSent", (packet, event) => {
     else Client.sendPacket(new C06PacketPlayerPosLook(Player.getX(), Player.getPlayer().func_174813_aQ().field_72338_b, Player.getZ(), yaw, pitch, wasOnGround))
     sending = false
 
+    ticksPassed++
+    if (ticksPassed < tickDelay) return
     if (clicking) {
         airClick()
         yaw = Player.getYaw()
@@ -48,14 +52,15 @@ register("packetReceived", (packet, event) => {
     lastS08Event = event
 }).setFilteredClass(S08PacketPlayerPosLook)
 
-export const clickAt = (y, p) => {
+export const clickAt = (y, p, ticksToWait = 0) => {
     yaw = parseFloat(y)
     pitch = parseFloat(p)
     if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat("Invalid rotation! How is this possible?")
 
-    if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
     rotating = true
     clicking = true
+    ticksPassed = 0
+    tickDelay = ticksToWait
 }
 
 export const ignoreNextC06Packet = () => {

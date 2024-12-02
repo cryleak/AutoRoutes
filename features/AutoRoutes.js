@@ -1,37 +1,63 @@
 import Settings from "../config"
 import RenderLibV2 from "../../RenderLibV2"
-import { convertFromRelative, getRoomName, chat, playerCoords, swapFromName, calcYawPitch, rotate, setSneaking, setWalking, convertToRealYaw, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, getEyeHeightSneaking, movementKeys, debugMessage } from "../utils/utils"
+import { renderBox, convertFromRelative, getRoomName, chat, playerCoords, swapFromName, rotate, setSneaking, setWalking, convertToRealYaw, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, debugMessage, getEtherYawPitch, rayTraceEtherBlock, getEyeHeightSneaking } from "../utils/utils"
 import { clickAt } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
-import { getDistance2D, isValidEtherwarpBlock, raytraceBlocks, drawLine3d } from "../../BloomCore/utils/utils"
-import Vector3 from "../../BloomCore/utils/Vector3";
+import { getDistance2D, drawLine3d } from "../../BloomCore/utils/utils"
 import "./managementOfShittyAutoRoutesBombDenmarkPleaseEndMe"
 import Promise from "../../PromiseV2"
 import Async from "../../Async"
 import addListener from "../events/SecretListener"
+import { Keybind } from "../../KeybindFix"
+
+const javaColor = Java.type("java.awt.Color")
+const scheduledTasks = []
 
 let activeNodes = []
 let activeNodesCoords = []
 let moveKeyListener = false
 let moveKeyCooldown = Date.now()
+let autoRoutesEnabled = true
+let delayedEther = false
+
+new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
+    autoRoutesEnabled = !autoRoutesEnabled
+    chat(`AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`)
+})
 
 register("renderWorld", () => {
-    if (!Settings().autoRoutesEnabled) return
+    const settings = Settings()
+    if (!settings.autoRoutesEnabled) return
     if (!activeNodes.length) return
     for (let i = 0; i < activeNodes.length; i++) {
         let extraRingData = activeNodesCoords[i]
         let ring = activeNodes[i]
-        if (extraRingData.triggered || Date.now() - extraRingData.lastUse < 1000) RenderLibV2.drawCyl(...extraRingData.position, ring.radius, ring.radius, -0.01, 120, 1, 90, 0, 0, 1, 0, 0, 1, false, true)
-        else RenderLibV2.drawCyl(...extraRingData.position, ring.radius, ring.radius, -0.01, 120, 1, 90, 0, 0, 0, 1, 1, 1, false, true)
-        if (ring.type === "etherwarp") {
-            let etherCoords = centerCoords(convertFromRelative(ring.etherBlock))
-            drawLine3d(...extraRingData.position, etherCoords[0], etherCoords[1] + 1, etherCoords[2], 0, 1, 1, 1, 10, false)
+        let position = extraRingData.position
+        let color
+        let usingJavaColor = false
+        if (extraRingData.triggered || Date.now() - extraRingData.lastUse < 1000) {
+            color = [javaColor.RED, javaColor.RED, javaColor.RED, javaColor.RED, javaColor.RED]
+            usingJavaColor = true
         }
-        if (Settings().displayIndex) Tessellator.drawString(`index: ${i}, type: ${ring.type}`, ...extraRingData.position, 16777215, true, 0.02, false)
+        else if (settings.nodeColorPreset === 0) {
+            color = [javaColor.CYAN, javaColor.PINK, javaColor.WHITE, javaColor.PINK, javaColor.CYAN]
+            usingJavaColor = true
+        }
+        // Ridiculously long line...
+        else if (settings.nodeColorPreset === 1) color = [[settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255], [settings.nodeColor2[0] / 255, settings.nodeColor2[1] / 255, settings.nodeColor2[2] / 255], [settings.nodeColor3[0] / 255, settings.nodeColor3[1] / 255, settings.nodeColor3[2] / 255], [settings.nodeColor4[0] / 255, settings.nodeColor4[1] / 255, settings.nodeColor4[2] / 255], [settings.nodeColor5[0] / 255, settings.nodeColor5[1] / 255, settings.nodeColor5[2] / 255]]
+        else continue
+        renderBox(position, ring.radius, 0.75, color, usingJavaColor)
+        if (ring.type === "etherwarp") {
+            if (!extraRingData.etherBlockCoord) continue
+            let etherCoords = centerCoords([extraRingData.etherBlockCoord[0], extraRingData.etherBlockCoord[1] + 1, extraRingData.etherBlockCoord[2]])
+            drawLine3d(extraRingData.position[0], extraRingData.position[1] + 0.01, extraRingData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], 0, 1, 1, 1, 10, false)
+        }
+        if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${ring.type}`, ...extraRingData.position, 16777215, true, 0.02, false)
     }
 })
 
 register("tick", () => {
+    if (!autoRoutesEnabled) return
     if (!Settings().autoRoutesEnabled) return
     if (Settings().editMode) return
     if (!activeNodes.length) return
@@ -42,37 +68,42 @@ register("tick", () => {
 const performActions = () => {
     let playerPosition = playerCoords().player
 
-    for (let i = 0; i < activeNodes.length; i++) {
-        let ring = activeNodes[i]
+    // for (let i = 0; i < activeNodes.length; i++) {
+    activeNodes.forEach((ring, i) => {
+        // let ring = activeNodes[i]
         let extraRingData = activeNodesCoords[i]
         let ringPos = extraRingData.position
         let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
+        console.log(distance)
         if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) {
-            if (Date.now() - extraRingData.lastUse < 1000) continue
-            if (extraRingData.triggered) continue
+            if (Date.now() - extraRingData.lastUse < 1000) return
+            if (extraRingData.triggered) return
             extraRingData.triggered = true
             let exec = () => {
                 if (ring.stop) releaseMovementKeys()
                 let execRing = () => ringActions[ring.type](ring, Object.keys(ring))
-                ring.delay ? Async.schedule(() => {
+                ring.delay ? Async.schedule(() => { // Delay if there is a delay set
                     playerPosition = playerCoords().player
                     let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
-                    if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) Client.scheduleTask(0, execRing)
+                    if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) {
+                        if (ring.type === "etherwarp") delayedEther = true
+                        exec()
+                    }
                 }, ring.delay)
-                    : execRing() // Delay if there is a delay set
+                    : execRing()
             }
 
-            if (Object.values(ring.awaitSecret).some(value => value === true)) {
+            if (ring.awaitSecret) {
                 let startTime = Date.now()
 
                 new Promise((resolve, reject) => {
-                    addListener(ring.awaitSecret, () => resolve(Date.now() - startTime), () => reject("hi"))
+                    addListener(() => resolve(Date.now() - startTime), () => reject("hi"))
                 }).then(value => {
                     playerPosition = playerCoords().player
                     let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
                     if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) {
-                        chat("Secret took" + value)
-                        // Client.scheduleTask(0, exec)
+                        chat(`Secret took ${value}ms.`)
+                        if (ring.type === "etherwarp") delayedEther = true
                         exec()
                     }
                 }, // Nice linter, VS Code.
@@ -82,7 +113,8 @@ const performActions = () => {
 
             } else exec()
         } else if (extraRingData.triggered) extraRingData.triggered = false
-    }
+    })
+    // }
 }
 
 let lastRoomName
@@ -103,20 +135,25 @@ const updateRoutes = () => {
     activeNodes = roomNodes
     activeNodesCoords = []
     for (let i = 0; i < activeNodes.length; i++) {
-        let [x, y, z] = convertFromRelative(activeNodes[i].position) // What the fuck is this
+        let nodeToPush = {}
+        let node = activeNodes[i]
+        let [x, y, z] = convertFromRelative(node.position) // What the fuck is this
         x += 0.5
         y += activeNodes[i].yOffset
         z += 0.5
-        activeNodesCoords.push({
-            position: [x, y, z],
-            triggered: false,
-            lastUse: 0 // It was last used on January 1st 1970.
-        })
+        nodeToPush.position = [x, y, z]
+        nodeToPush.triggered = false
+        nodeToPush.lastUse = 0
+        if (node.type === "etherwarp") {
+            if (node.etherCoordMode === 0) nodeToPush.etherBlockCoord = convertFromRelative(node.etherBlock)
+            else nodeToPush.etherBlockCoord = rayTraceEtherBlock([x, y + getEyeHeightSneaking(), z], convertToRealYaw(node.yaw), node.pitch)
+        }
+        activeNodesCoords.push(nodeToPush)
     }
+    chat("Routes updated for current room.")
 }
 
 register("command", () => {
-    chat("Routes updated for current room.")
     updateRoutes()
 }).setName("updateroutes")
 
@@ -155,24 +192,17 @@ const ringActions = {
         releaseMovementKeys()
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
         setSneaking(true)
-        clickAt(yaw, pitch)
+        clickAt(yaw, pitch, delayedEther === true ? 2 : 0)
+        if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
         moveKeyListener = true
         moveKeyCooldown = Date.now()
+        delayedEther = false
     },
-    aotv: (args) => {
+    useItem: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
-        const success = swapFromName("Aspect of The Void")
+        const success = swapFromName(args.itemName)
         if (!success) return
-        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-        setSneaking(false)
-        clickAt(yaw, pitch)
-    },
-    hype: (args) => {
-        let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
-        const success = swapFromName("Hyperion")
-        if (!success) return
-        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-        setSneaking(false)
+        if (args.stopSneaking) setSneaking(false)
         clickAt(yaw, pitch)
     },
     walk: (args) => {
@@ -208,7 +238,7 @@ const ringActions = {
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
     if (!moveKeyListener) return
-    if (Date.now() - moveKeyCooldown < 500) return
+    if (Date.now() - moveKeyCooldown < 60) return
     if (Client.isInGui() || !World.isLoaded()) return
     if (!Keyboard.getEventKeyState()) return
     const keyCode = Keyboard.getEventKey()
@@ -219,31 +249,6 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
         setSneaking(false)
     }
 })
-
-function getEtherYawPitch(etherBlock) {
-    const playerCoords = [Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()]
-
-    const centeredCoords = centerCoords(etherBlock)
-    const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
-    // Return if you can aim at center of the block
-    if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === etherBlock[index])) return rotation
-    const lowerLimit = { yaw: rotation.yaw - 4, pitch: rotation.pitch - 6 }
-    const upperLimit = { yaw: rotation.yaw + 4, pitch: rotation.pitch + 6 }
-    // let runs = 0
-    for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw++) {
-        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.3) {
-            // runs++
-            let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
-            if (!prediction) continue
-            if (prediction.every((coord, index) => coord === etherBlock[index])) {
-                // console.log(runs)
-                return { yaw, pitch }
-            }
-        }
-    }
-    // console.log(runs)
-    return null
-}
 
 let packetsSent = 0
 register("packetSent", (packet, event) => {
@@ -260,3 +265,19 @@ register("step", () => {
     new Message(`§0[§6AutoRoutesDebug§0]§f Movement packets sent last second: ${packetsSent}`).setChatLineId(89299).chat()
     packetsSent = 0
 }).setDelay(1)
+
+register("tick", () => {
+    try {
+        for (let i = 0; i < scheduledTasks.length; i++) {
+            ChatLib.chat("exec")
+            scheduledTasks[i]()
+        }
+    } catch (e) {
+
+    }
+    while (scheduledTasks.length) scheduledTasks.pop()
+})
+
+function scheduleTask(exec) {
+    scheduledTasks.push(exec)
+}
