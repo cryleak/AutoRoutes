@@ -47,7 +47,7 @@ config
         title: "Node Color Preset",
         description: "Select an option",
         category: "Visuals",
-        options: ["Trans", "Custom"],
+        options: ["Trans", "Custom", "Sweden", "Denmark", "Ring"],
         value: 0
     })
     .addColorPicker({
@@ -57,7 +57,7 @@ config
         category: "Visuals",
         subcategory: "Node",
         value: [255, 255, 255, 255],
-        shouldShow: data => data.nodeColorPreset === 1
+        shouldShow: data => data.nodeColorPreset === 1 || data.nodeColorPreset === 4
     })
     .addColorPicker({
         configName: "nodeColor2",

@@ -30,7 +30,7 @@ config
         title: "Ring type",
         description: "Select an option",
         category: "Ring",
-        options: ["Look", "Etherwarp", "Use Item", "Walk", "Finish Route", "Superboom", "Pearl VClip"],
+        options: ["Look", "Etherwarp", "Use Item", "Walk", "Superboom", "Pearl VClip"],
         value: 0
     })
     .addTextInput({
@@ -61,14 +61,14 @@ config
         title: "Yaw",
         description: "Number between -180 and 180.",
         category: "Ring",
-        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4 || data.type === 5
+        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4
     })
     .addTextInput({
         configName: "pitch",
         title: "Pitch",
         description: "Number between -180 and 180.",
         category: "Ring",
-        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4 || data.type === 5
+        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4
     })
     .addTextInput({
         configName: "etherBlock",
@@ -81,7 +81,15 @@ config
         configName: "awaitSecret",
         title: "Await secrets and skulls (such as redstone skull).",
         description: "",
-        category: "Ring"
+        category: "Ring",
+        shouldShow: data => !data.awaitBatSpawn || data.type !== 2
+    })
+    .addSwitch({
+        configName: "awaitBatSpawn",
+        title: "Await bat spawning",
+        description: "",
+        category: "Ring",
+        shouldShow: data => !data.awaitSecret && data.type === 2
     })
     .addTextInput({
         configName: "pearlClipDistance",
@@ -101,13 +109,12 @@ config
 const ringCreationGUI = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => ringCreationGUI.settings
 
-export const ringTypes = ["look", "etherwarp", "useItem", "walk", "finish", "superboom", "pearlclip"]
+export const ringTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip"]
 export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
     ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
-    ["useItem", ["yaw", "pitch", "itemName", "stopSneaking"]],
+    ["useItem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
     ["walk", ["yaw", "pitch"]],
-    ["finish", ["yaw", "pitch"]],
     ["superboom", ["yaw", "pitch"]],
     ["pearlclip", ["pearlClipDistance"]]
 ])

@@ -1,20 +1,29 @@
 import Async from "../../Async"
 import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
+import { movementKeys } from "../utils/utils"
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
 
 const listeners = []
 
+let moveKeyCooldown = Date.now()
 
-function addListener(successExec, failExec) {
-    const listener = () => successExec()
+
+function addListener(successExec, failExec, awaitingBatSpawn) {
+    const listener = {
+        success: successExec,
+        fail: failExec,
+        awaitingBat: awaitingBatSpawn
+    }
+
     listeners.push(listener)
+    moveKeyCooldown = Date.now()
     Async.schedule(() => {
         const index = listeners.indexOf(listener)
         if (index === -1) return
         listeners.splice(index, 1)
-        failExec()
+        failExec("Await timed out!")
     }, 5000)
 }
 export default addListener
@@ -30,8 +39,9 @@ register("packetSent", (packet, event) => { // Chest open listener
     if (!["minecraft:chest", "minecraft:trapped_chest"].includes(blockName)) return
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
+        if (listener.awaitingBat) continue
         listeners.splice(i, 1)
-        listener()
+        listener.success()
     }
 }).setFilteredClass(C08PacketPlayerBlockPlacement)
 
@@ -42,8 +52,9 @@ register("packetSent", (packet, event) => { // Wither essence listener. Detects 
     if (blockName !== "minecraft:skull") return
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
+        if (listener.awaitingBat) continue
         listeners.splice(i, 1)
-        listener()
+        listener.success()
     }
 }).setFilteredClass(C08PacketPlayerBlockPlacement)
 
@@ -57,8 +68,9 @@ register("packetReceived", (packet, event) => { // Bat death listener
 
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
+        if (listener.awaitingBat) continue
         listeners.splice(i, 1)
-        listener()
+        listener.success()
     }
 }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
 
@@ -78,13 +90,30 @@ register("tick", () => { // Schizo solution for item pickup listener
 
         for (let i = 0; i < listeners.length; i++) {
             let listener = listeners[i]
+            if (listener.awaitingBat) continue
             listeners.splice(i, 1)
-            listener()
+            listener.success()
         }
-        return
-
+        break
     }
     entitiesLastTick = itemEntities
+})
+
+register("tick", () => { // Wait for bat spawn
+    const bats = World.getAllEntitiesOfType(net.minecraft.entity.passive.EntityBat)
+
+    for (let bat of bats) {
+
+        if (getDistanceToEntity(bat) > 15) continue
+
+        for (let i = 0; i < listeners.length; i++) {
+            let listener = listeners[i]
+            if (!listener.awaitingBat) continue
+            listeners.splice(i, 1)
+            listener.success()
+        }
+        return
+    }
 })
 
 register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger await secret on left click
@@ -93,11 +122,29 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
     const state = event.buttonstate
     if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return
 
-    if (listeners.length) cancel(event)
+    if (!listeners.length) return
+    cancel(event)
     for (let i = 0; i < listeners.length; i++) {
         let listener = listeners[i]
         listeners.splice(i, 1)
-        listener()
+        listener.success()
     }
 
+})
+
+register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
+    if (Date.now() - moveKeyCooldown < 150) return
+    if (Client.isInGui() || !World.isLoaded()) return
+    if (!Keyboard.getEventKeyState()) return
+    const keyCode = Keyboard.getEventKey()
+    if (!keyCode) return
+
+    if (!movementKeys.includes(keyCode)) return
+    if (!listeners.length) return
+
+    for (let i = 0; i < listeners.length; i++) {
+        let listener = listeners[i]
+        listeners.splice(i, 1)
+        listener.fail("You moved. All awaits cancelled.")
+    }
 })

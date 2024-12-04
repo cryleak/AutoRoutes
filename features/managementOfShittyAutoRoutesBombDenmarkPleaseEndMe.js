@@ -28,6 +28,7 @@ register("command", () => {
     const prediction = rayTraceEtherBlock([Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
     config.setConfigValue("Ring", "etherBlock", prediction.toString())
     config.setConfigValue("Ring", "awaitSecret", false)
+    config.setConfigValue("Ring", "awaitBatSpawn", false)
     config.setConfigValue("Ring", "delay", 0)
     config.setConfigValue("Ring", "pearlClipDistance", "20")
 
@@ -67,6 +68,7 @@ register("command", (...args) => {
     const etherBlock = convertFromRelative(ring.etherBlock) ?? prediction
     config.setConfigValue("Ring", "itemName", ring.itemName ?? "Aspect of the Void")
     config.setConfigValue("Ring", "stopSneaking", ring.stopSneaking ?? false)
+    config.setConfigValue("Ring", "awaitBatSpawn", ring.awaitBatSpawn ?? false)
     config.setConfigValue("Ring", "etherCoordMode", ring.etherCoordMode)
     config.setConfigValue("Ring", "etherBlock", etherBlock.toString())
     config.setConfigValue("Ring", "awaitSecret", ring.awaitSecret)
@@ -109,7 +111,7 @@ function addRing(args, pos) {
 
     if (ringType === "etherwarp") args.etherBlock = convertToRelative(args.etherBlock.split(",").map(coord => Math.floor(parseFloat(coord))))
 
-    if (["look", "etherwarp", "useItem", "walk", "finish", "superboom"].includes(ringType)) args.yaw = convertToRelativeYaw(args.yaw)
+    if (["look", "etherwarp", "useItem", "walk", "superboom"].includes(ringType)) args.yaw = convertToRelativeYaw(args.yaw)
 
 
     pos = convertToRelative(pos)
