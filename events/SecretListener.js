@@ -1,6 +1,6 @@
-import Async from "../../Async"
 import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
-import { movementKeys } from "../utils/utils"
+import { movementKeys } from "../utils/RouteUtils"
+import Async from "../../Async"
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 

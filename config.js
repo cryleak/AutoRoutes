@@ -95,6 +95,29 @@ config
         value: [255, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1
     })
+    .addSwitch({
+        configName: "zpewEnabled",
+        title: "Zero Ping Etherwarp Toggle",
+        description: "",
+        category: "Zero Ping TP",
+        value: true
+    })
+    .addSlider({
+        configName: "maxFails",
+        title: "Max fails in 20 seconds",
+        description: "",
+        category: "Zero Ping TP",
+        options: [1, 10],
+        value: 3
+    })
+    .addSlider({
+        configName: "zpewDelay",
+        title: "Tick delay",
+        description: "",
+        category: "Zero Ping TP",
+        options: [0, 5],
+        value: 0
+    })
 
 const mySettings = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => mySettings.settings

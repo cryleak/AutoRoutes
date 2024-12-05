@@ -1,14 +1,16 @@
 import Settings from "../config"
-import { renderBox, renderScandinavianFlag, convertFromRelative, getRoomName, chat, playerCoords, swapFromName, rotate, setSneaking, setWalking, convertToRealYaw, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, debugMessage, getEtherYawPitch, rayTraceEtherBlock, getEyeHeightSneaking, getEtherYawPitchFromArgs } from "../utils/utils"
-import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
-import { data } from "../utils/routesData"
-import { getDistance2D, drawLine3d } from "../../BloomCore/utils/utils"
-import "./managementOfShittyAutoRoutesBombDenmarkPleaseEndMe"
 import Promise from "../../PromiseV2"
 import Async from "../../Async"
 import addListener from "../events/SecretListener"
-import { Keybind } from "../../KeybindFix"
 import RenderLibV2 from "../../RenderLibV2"
+import { renderBox, renderScandinavianFlag, chat } from "../utils/utils"
+import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
+import { getEyeHeightSneaking, getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys } from "../utils/RouteUtils"
+import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
+import { data } from "../utils/routesData"
+import { getDistance2D, drawLine3d } from "../../BloomCore/utils/utils"
+import { Keybind } from "../../KeybindFix"
+import "./managementOfShittyAutoRoutesBombDenmarkPleaseEndMe"
 
 let activeNodes = []
 let activeNodesCoords = []
@@ -23,6 +25,7 @@ new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPre
 
 const render = register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
     const settings = Settings()
+    if (!settings.autoRoutesEnabled) return
     if (!activeNodes.length) return
     for (let i = 0; i < activeNodes.length; i++) {
         let extraRingData = activeNodesCoords[i]
@@ -181,7 +184,8 @@ const ringActions = {
             moveKeyListener = true
             moveKeyCooldown = Date.now()
         }
-        if (success === 2) Client.scheduleTask(0, execRing) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
+        // U CANT PUT A SCHEDULETASK IN A SCHEDULETASK SO IM JUST USING ASYNC SCHEDULE AND THEN SCHEDULING THE TASK SHOUTOUT TO CT BTW
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 5) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
         else execRing()
 
     },
@@ -193,7 +197,7 @@ const ringActions = {
             if (args.stopSneaking) setSneaking(false)
             clickAt(yaw, pitch)
         }
-        if (success === 2) Client.scheduleTask(0, execRing)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 5)
         else execRing()
     },
     walk: (args) => {
@@ -218,7 +222,7 @@ const ringActions = {
             clickAt(0, 90)
             registerPearlClip(args.pearlClipDistance)
         }
-        if (success === 2) Client.scheduleTask(0, execRing)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 5)
         else execRing()
     }
 }

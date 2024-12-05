@@ -1,9 +1,10 @@
-import Settings from "../config"
-import ringCreation from "../ringCreation"
 import { ringTypes, availableArgs } from "../ringCreation"
-import { convertToRelative, convertFromRelative, getRoomName, chat, playerCoords, convertToRelativeYaw, convertToRealYaw, getEyeHeightSneaking, rayTraceEtherBlock } from "../utils/utils"
+import { chat } from "../utils/utils"
+import { convertToRelative, convertFromRelative, getRoomName, convertToRelativeYaw, convertToRealYaw } from "../utils/RoomUtils"
+import { playerCoords, getEyeHeightSneaking, rayTraceEtherBlock } from "../utils/RouteUtils"
 import { data } from "../utils/routesData"
 import { getDistance3D } from "../../BloomCore/utils/utils"
+import ringCreation from "../ringCreation"
 
 let ringCoords = null
 let editingRingIndex = null

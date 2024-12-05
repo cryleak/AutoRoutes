@@ -1,4 +1,5 @@
-import { sendAirClick, debugMessage, rotate } from "./utils"
+import { debugMessage } from "./utils"
+import { rotate, sendAirClick } from "../utils/RouteUtils"
 import Settings from "../config"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
