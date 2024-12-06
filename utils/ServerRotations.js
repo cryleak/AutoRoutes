@@ -71,6 +71,7 @@ export function clickAt(y, p) {
     rotating = true
     clicking = true
     if (preRotating) debugMessage(`Prerotated for ${packetsPreRotating} packets.`)
+    if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
     preRotating = false
     renderYaw = yaw
 }
@@ -97,9 +98,10 @@ export function ignoreNextC06Packet() {
 }
 
 const airClick = () => {
-    // debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
+    debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
     sendAirClick()
 }
+
 
 register("worldUnload", stopRotating)

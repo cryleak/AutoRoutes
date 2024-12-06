@@ -23,7 +23,7 @@ new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPre
     chat(`AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`)
 })
 
-const render = register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
+register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
     const settings = Settings()
     if (!settings.autoRoutesEnabled) return
     if (!activeNodes.length) return
@@ -58,7 +58,7 @@ const render = register("renderWorld", () => { // Bro this turned into a mess im
             RenderLibV2.drawCyl(...position, ring.radius, ring.radius, -0.01, 40, 1, 90, 0, 0, ...color, 1, false, true)
         }
     }
-}).unregister()
+})
 
 register("tick", () => {
     if (!autoRoutesEnabled) return
@@ -72,21 +72,21 @@ register("tick", () => {
 const performActions = () => {
     let playerPosition = playerCoords().player
 
-    for (let i = 0; i < activeNodes.length; i++) {
-        // activeNodes.forEach((ring, i) => {
-        let ring = activeNodes[i]
+    // for (let i = 0; i < activeNodes.length; i++) {
+    activeNodes.forEach((ring, i) => {
+        // let ring = activeNodes[i]
         let extraRingData = activeNodesCoords[i]
         let ringPos = extraRingData.position
         let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
         if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) {
-            // if (Date.now() - extraRingData.lastUse < 1000) return
-            // if (extraRingData.triggered) return
-            if (Date.now() - extraRingData.lastUse < 1000) continue
-            if (extraRingData.triggered) continue
+            if (Date.now() - extraRingData.lastUse < 1000) return
+            if (extraRingData.triggered) return
+            // if (Date.now() - extraRingData.lastUse < 1000) continue
+            // if (extraRingData.triggered) continue
             extraRingData.triggered = true
             let exec = () => {
                 if (ring.stop) releaseMovementKeys()
-                let execRing = () => ringActions[ring.type](ring, Object.keys(ring))
+                let execRing = () => ringActions[ring.type](ring)
                 if (ring.delay) {
                     preRotate(ring)
                     Async.schedule(() => { // Delay if there is a delay set
@@ -120,8 +120,8 @@ const performActions = () => {
 
             } else exec()
         } else if (extraRingData.triggered) extraRingData.triggered = false
-        // })
-    }
+    })
+    // }
 }
 
 let lastRoomName
@@ -130,9 +130,6 @@ register("step", () => {
     if (getRoomName() === lastRoomName) return
     lastRoomName = getRoomName()
     updateRoutes()
-    if (Settings().autoRoutesEnabled) render.register()
-    else render.unregister()
-
 }).setFps(10)
 
 const updateRoutes = () => {
@@ -149,7 +146,7 @@ const updateRoutes = () => {
         let node = activeNodes[i]
         let [x, y, z] = convertFromRelative(node.position) // What the fuck is this
         x += 0.5
-        y += activeNodes[i].yOffset
+        y += node.yOffset
         z += 0.5
         nodeToPush.position = [x, y, z]
         nodeToPush.triggered = false
@@ -173,19 +170,22 @@ const ringActions = {
         rotate(yaw, pitch)
     },
     etherwarp: (args) => {
-        let [yaw, pitch] = getEtherYawPitchFromArgs(args)
+        const rotation = getEtherYawPitchFromArgs(args)
+        if (!rotation) return
         const success = swapFromName("Aspect of The Void")
         if (!success) return
+        let time = Date.now()
         const execRing = () => {
+            ChatLib.chat(Date.now() - time)
             releaseMovementKeys()
             Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             setSneaking(true)
-            clickAt(yaw, pitch)
+            clickAt(rotation[0], rotation[1])
             moveKeyListener = true
             moveKeyCooldown = Date.now()
         }
         // U CANT PUT A SCHEDULETASK IN A SCHEDULETASK SO IM JUST USING ASYNC SCHEDULE AND THEN SCHEDULING THE TASK SHOUTOUT TO CT BTW
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 5) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 40) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
         else execRing()
 
     },
@@ -193,11 +193,13 @@ const ringActions = {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         const success = swapFromName(args.itemName)
         if (!success) return
+        let time = Date.now()
         const execRing = () => {
+            ChatLib.chat(Date.now() - time)
             if (args.stopSneaking) setSneaking(false)
             clickAt(yaw, pitch)
         }
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 5)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 40)
         else execRing()
     },
     walk: (args) => {
@@ -209,11 +211,9 @@ const ringActions = {
     superboom: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         rotate(yaw, pitch)
-        if (Player.getHeldItem().getID() !== 46) {
-            const success = swapFromItemID(46)
-            if (!success) return
-            Client.scheduleTask(0, leftClick)
-        } else leftClick()
+        const success = swapFromItemID(46)
+        if (!success) return
+        Async.schedule(() => Client.scheduleTask(0, leftClick), 40)
     },
     pearlclip: (args) => {
         const success = swapFromName("Ender Pearl")
@@ -222,7 +222,7 @@ const ringActions = {
             clickAt(0, 90)
             registerPearlClip(args.pearlClipDistance)
         }
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 5)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 40)
         else execRing()
     }
 }
@@ -238,6 +238,7 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     if (movementKeys.includes(keyCode)) {
         moveKeyListener = false
         setSneaking(false)
+        stopRotating()
     }
 })
 

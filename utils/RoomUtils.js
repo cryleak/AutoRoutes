@@ -15,7 +15,7 @@ const rotationNumber = new Map([
 export const convertToRelative = (realCoord) => {
     if (!realCoord) return null
     const currRoom = dungeonUtils.INSTANCE.currentRoom;
-    if (!currRoom) return realCoord
+    if (!currRoom) return JSON.parse(JSON.stringify(realCoord))
     const roomRotation = currRoom.rotation;
     const clayCoord = extractCoord(currRoom.clayPos.toString());
 
@@ -31,7 +31,7 @@ export const convertToRelative = (realCoord) => {
 export const convertFromRelative = (relativeCoord) => {
     if (!relativeCoord) return null
     const currRoom = dungeonUtils.INSTANCE.currentRoom;
-    if (!currRoom) return relativeCoord
+    if (!currRoom) return JSON.parse(JSON.stringify(relativeCoord))
     const roomRotation = currRoom.rotation;
     const clayCoord = extractCoord(currRoom.clayPos.toString());
 

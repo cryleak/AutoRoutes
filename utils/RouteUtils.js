@@ -1,4 +1,8 @@
+import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
+import { debugMessage, chat } from "./utils"
+import { convertFromRelative, convertToRealYaw } from "./RoomUtils"
 import Settings from "../config"
+import Vector3 from "../../BloomCore/utils/Vector3"
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction")
@@ -176,6 +180,7 @@ const pearlclip = register("packetReceived", (packet, event) => {
     })
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
 
+
 export const sendAirClick = () => Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
 
 export const getEyeHeightSneaking = () => { // Peak schizo
@@ -189,6 +194,7 @@ export const getEyeHeight = () => {
 
 import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
 
+const System = Java.type("java.lang.System")
 /**
  * Gets a valid Yaw/Pitch combination that you can etherwarp to in order to land at a specific block. Has terrible performance.
  * @param {Array} blockCoords 
@@ -201,22 +207,23 @@ export function getEtherYawPitch(blockCoords) {
     const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
     // Return if you can aim at center of the block
     if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) return rotation
-    const lowerLimit = { yaw: rotation.yaw - 4, pitch: rotation.pitch - 6 }
-    const upperLimit = { yaw: rotation.yaw + 4, pitch: rotation.pitch + 6 }
-    const runStart = Date.now()
+    const lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 1 }
+    const upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 1 }
+    const runStart = System.nanoTime()
     let runs = 0
     for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw++) {
-        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch++) {
+        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.5) {
             runs++
-            let prediction = rayTraceEtherBlock(playerCoords, yaw, pitch)
+            // let prediction = rayTraceEtherBlock(playerCoords, yaw, pitch)
+            let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
             if (!prediction) continue
             if (prediction.every((coord, index) => coord === blockCoords[index])) {
-                debugMessage(`Found Yaw/Pitch combination in ${runs} attempts! Took ${Date.now() - runStart}ms.`, false)
+                debugMessage(`Found Yaw/Pitch combination in ${runs} attempts! Took ${(System.nanoTime() - runStart) / 1000000}ms.`, false)
                 return { yaw, pitch }
             }
         }
     }
-    debugMessage(`Failed to find Yaw/Pitch combination. ${runs} attempts. Took ${Date.now() - runStart}ms`, false)
+    debugMessage(`Failed to find Yaw/Pitch combination. ${runs} attempts. Took ${(System.nanoTime() - runStart) / 1000000}ms`, false)
     return null
 }
 
@@ -242,9 +249,6 @@ export function getEtherYawPitchFromArgs(args) {
     }
     return [yaw, pitch]
 }
-
-import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
-
 
 /**
  * Gets the block an etherwarp from a specified position and yaw/pitch will land on.
