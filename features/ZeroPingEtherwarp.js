@@ -3,6 +3,7 @@
 import Settings from "../config";
 import { C08PacketPlayerBlockPlacement, isValidEtherwarpBlock, MCBlockPos, raytraceBlocks, getEtherwarpBlock, getEtherwarpBlockSuccess } from "../../BloomCore/utils/Utils"
 import Vector3 from "../../BloomCore/utils/Vector3";
+import Async from "../../Async"
 import { ignoreNextC06Packet } from "../utils/ServerRotations"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -10,6 +11,8 @@ const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08P
 const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
+const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding");
+const KeyBoard = Java.type("org.lwjgl.input.Keyboard");
 
 let inF7Boss = false;
 const playerState = {
@@ -22,8 +25,23 @@ const playerState = {
 };
 const sent = [];
 let updatePosition = true;
+let alreadyEthered = false
+let lastEther = Date.now()
 const recentlySent = []
 const recentFails = []
+const keybinds = {
+    forward: Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),
+    left: Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
+    right: Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
+    back: Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i()
+};
+
+global.cryleak ??= {};
+global.cryleak.autoroutes ??= {};
+global.cryleak.autoroutes.ether ??= (yaw, pitch) => {
+    ether(yaw, pitch)
+    alreadyEthered = true
+}
 
 register("packetSent", (packet) => {
     if (!Settings().zpewEnabled) return
@@ -31,7 +49,7 @@ register("packetSent", (packet) => {
     ether()
 }).setFilteredClass(net.minecraft.network.play.client.C08PacketPlayerBlockPlacement)
 
-const ether = () => {
+const ether = (etherYaw = playerState.yaw, etherPitch = playerState.pitch) => {
     const blockID = Player.lookingAt()?.getType()?.getID();
     if (blockID === 54 || blockID === 146 || blockID === 154) return;
     const info = getTeleportInfo(Player.getHeldItem());
@@ -41,24 +59,30 @@ const ether = () => {
 
     while (recentFails.length && Date.now() - recentFails[0] > 20 * 1000) recentFails.shift()
     if (recentFails.length >= Settings().maxFails) return ChatLib.chat(`§cZero Ping TP cancelled. ${recentFails.length} fails last 20 seconds.`)
-    if (sent.length >= 5) return ChatLib.chat(`§cZero Ping TP cancelled. ${sent.length} packets queued.`)
+    if (alreadyEthered) {
+        alreadyEthered = false
+        return
+    }
+    if (Date.now() - lastEther < 20) ChatLib.chat("why fast")
+    // if (sent.length >= 5) return ChatLib.chat(`§cZero Ping TP cancelled. ${sent.length} packets queued.`)
 
     let prediction;
-    // prediction = raytraceBlocks([playerState.x, playerState.y + Player.getPlayer().func_70047_e(), playerState.z], Vector3.fromPitchYaw(playerState.pitch, playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
+    prediction = raytraceBlocks([playerState.x, playerState.y + 1.5399999618530273, playerState.z], Vector3.fromPitchYaw(etherPitch, etherYaw), info.distance, isValidEtherwarpBlock, true, true);
     // prediction = getEtherwarpBlock(true, parseInt(info.distance))
-    const [success, block] = getEtherwarpBlockSuccess(true, parseInt(info.distance))
-    if (!success) return
-    prediction = block
+    // const [success, block] = getEtherwarpBlockSuccess(true, parseInt(info.distance))
+    // if (!success) return
+    // prediction = block
     if (prediction) {
         prediction[0] += 0.5;
         prediction[1] += 1.05;
         prediction[2] += 0.5;
     }
     if (!prediction) return;
+    lastEther = Date.now()
 
     const [x, y, z] = prediction;
-    const yaw = (playerState.yaw % 360 + 360) % 360
-    const pitch = playerState.pitch;
+    const yaw = (etherYaw % 360 + 360) % 360
+    const pitch = etherPitch
 
     playerState.x = x;
     playerState.y = y;
@@ -73,6 +97,20 @@ const ether = () => {
         Player.getPlayer().func_70107_b(x, y, z);
         Player.getPlayer().func_70016_h(0, 0, 0);
         updatePosition = true;
+
+
+        /*
+        const blockState = World.getBlockAt(Math.floor(x), Math.floor(y - 1), Math.floor(z)).getState()
+        const block = blockState.func_177230_c()
+        let halfValue
+        // I MADE THIS SHIT GET STAIR ORIENTATION I HATE MAPPINGS
+        if (block instanceof net.minecraft.block.BlockStairs) halfValue = blockState.func_177229_b(block.field_176308_b)
+        else if (block instanceof net.minecraft.block.BlockSlab) halfValue = blockState.func_177229_b(block.field_176554_a)
+        else return
+        if (halfValue.toString() !== "bottom") return
+        Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, false))
+        Async.schedule(() => Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, KeyBoard.isKeyDown(keybind))), 10) // press keys down again 10ms later
+        */
     }
     Client.scheduleTask(Settings().zpewDelay, exec)
 }
@@ -115,8 +153,9 @@ register("packetReceived", (packet, event) => {
     while (recentlySent.length) recentlySent.shift()
 }).setFilteredClass(S08PacketPlayerPosLook);
 
-register("packetSent", packet => {
+register("packetSent", (packet, event) => {
     if (!updatePosition) return;
+    if (event.isCancelled()) return
     const x = packet.func_149464_c();
     const y = packet.func_149467_d();
     const z = packet.func_149472_e();
@@ -131,7 +170,7 @@ register("packetSent", packet => {
         playerState.yaw = yaw;
         playerState.pitch = pitch;
     }
-}).setFilteredClass(C03PacketPlayer);
+}).setFilteredClass(C03PacketPlayer).setPriority(Priority.LOWEST)
 
 register("packetSent", packet => {
     const action = packet.func_180764_b();
@@ -152,7 +191,7 @@ function getTeleportInfo(item) {
     if (!Settings().zpewEnabled) return;
     if (inF7Boss) return;
     const sbId = item?.getNBT()?.toObject()?.tag?.ExtraAttributes?.id;
-    if (!["ASPECT_OF_THE_VOID", "ASPECT_OF_THE_END"].includes(sbId)) return
+    // if (!["ASPECT_OF_THE_VOID", "ASPECT_OF_THE_END"].includes(sbId)) return
 
     const tuners = item?.getNBT()?.toObject()?.tag?.ExtraAttributes?.tuned_transmission || 0;
     if (!playerState.sneaking) return

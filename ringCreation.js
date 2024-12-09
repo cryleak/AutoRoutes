@@ -101,7 +101,7 @@ config
     .addTextInput({
         configName: "delay",
         title: "Ring Delay",
-        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.",
+        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.\nDelay needs to be at least 100ms for some rings to work properly.",
         category: "Ring"
     })
 

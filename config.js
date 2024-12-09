@@ -115,7 +115,7 @@ config
         title: "Tick delay",
         description: "",
         category: "Zero Ping TP",
-        options: [0, 5],
+        options: [0, 50],
         value: 0
     })
 

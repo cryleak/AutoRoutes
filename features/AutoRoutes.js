@@ -34,7 +34,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
         let color
         if (ring.type === "etherwarp" && extraRingData.etherBlockCoord) {
             let etherCoords = centerCoords([extraRingData.etherBlockCoord[0], extraRingData.etherBlockCoord[1] + 1, extraRingData.etherBlockCoord[2]])
-            drawLine3d(extraRingData.position[0], extraRingData.position[1] + 0.01, extraRingData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], 0, 1, 1, 1, 10, false)
+            drawLine3d(extraRingData.position[0], extraRingData.position[1] + 0.01, extraRingData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], 0, 1, 1, 1, 2, false)
         }
         if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${ring.type}`, ...extraRingData.position, 16777215, true, 0.02, false)
 
@@ -92,7 +92,7 @@ const performActions = () => {
                     Async.schedule(() => { // Delay if there is a delay set
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
-                        if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) Client.scheduleTask(0, execRing)
+                        if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) execRing()
                         else stopRotating()
                     }, ring.delay)
                 } else execRing()
@@ -104,7 +104,7 @@ const performActions = () => {
                 new Promise((resolve, reject) => {
                     if (ring.type === "useItem" && ring.awaitBatSpawn) addListener(() => resolve(Date.now() - startTime), (msg) => reject(msg), true)
                     else addListener(() => resolve(Date.now() - startTime), (msg) => reject(msg), false)
-                    preRotate(ring)
+                    if (!ring.delay) preRotate(ring)
                 }).then(secretTime => {
                     playerPosition = playerCoords().player
                     let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
@@ -170,26 +170,29 @@ const ringActions = {
         rotate(yaw, pitch)
     },
     etherwarp: (args) => {
-        const rotation = getEtherYawPitchFromArgs(args)
-        if (!rotation) return
+        // new Thread(() => { // This can freeze the main thread for a very long time if the getting ether yaw pitch takes very long if I don't execute it in a new thread. Shoutout to CT btw.
+        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+        releaseMovementKeys()
         const success = swapFromName("Aspect of The Void")
         if (!success) return
+        const rotation = getEtherYawPitchFromArgs(args)
+        if (!rotation) return
         let time = Date.now()
         const execRing = () => {
             ChatLib.chat(Date.now() - time)
-            releaseMovementKeys()
-            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             setSneaking(true)
-            clickAt(rotation[0], rotation[1])
+            clickAt(rotation[0], rotation[1], true)
             moveKeyListener = true
             moveKeyCooldown = Date.now()
         }
         // U CANT PUT A SCHEDULETASK IN A SCHEDULETASK SO IM JUST USING ASYNC SCHEDULE AND THEN SCHEDULING THE TASK SHOUTOUT TO CT BTW
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 40) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 20) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
         else execRing()
 
+        // }).start()
     },
     useItem: (args) => {
+        ChatLib.chat(args.itemName)
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         const success = swapFromName(args.itemName)
         if (!success) return
@@ -199,7 +202,7 @@ const ringActions = {
             if (args.stopSneaking) setSneaking(false)
             clickAt(yaw, pitch)
         }
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 40)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 20)
         else execRing()
     },
     walk: (args) => {
@@ -213,7 +216,10 @@ const ringActions = {
         rotate(yaw, pitch)
         const success = swapFromItemID(46)
         if (!success) return
-        Async.schedule(() => Client.scheduleTask(0, leftClick), 40)
+        Async.schedule(() => Client.scheduleTask(0, () => {
+            if (Player?.getHeldItem()?.getID() !== 46) return chat("Why aren't you holding a TNT anymore?")
+            leftClick()
+        }), 40)
     },
     pearlclip: (args) => {
         const success = swapFromName("Ender Pearl")
@@ -242,7 +248,6 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     }
 })
 
-/*
 let packetsSent = 0
 register("packetSent", (packet, event) => {
     Client.scheduleTask(0, () => {
@@ -258,7 +263,6 @@ register("step", () => {
     new Message(`§0[§6AutoRoutesDebug§0]§f Movement packets sent last second: ${packetsSent}`).setChatLineId(89299).chat()
     packetsSent = 0
 }).setDelay(1)
-*/
 
 const preRotate = (ringArgs) => {
     if (!["look", "etherwarp", "useItem", "walk", "finish", "superboom"].includes(ringArgs.type)) return

@@ -37,7 +37,7 @@ register("packetSent", (packet, event) => { // Chest open listener
     const [x, y, z] = [position.x, position.y, position.z]
     const blockName = World.getBlockAt(x, y, z).type.getRegistryName()
     if (!["minecraft:chest", "minecraft:trapped_chest"].includes(blockName)) return
-    for (let i = 0; i < listeners.length; i++) {
+    for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         if (listener.awaitingBat) continue
         listeners.splice(i, 1)
@@ -50,7 +50,7 @@ register("packetSent", (packet, event) => { // Wither essence listener. Detects 
     const [x, y, z] = [position.x, position.y, position.z]
     const blockName = World.getBlockAt(x, y, z).type.getRegistryName()
     if (blockName !== "minecraft:skull") return
-    for (let i = 0; i < listeners.length; i++) {
+    for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         if (listener.awaitingBat) continue
         listeners.splice(i, 1)
@@ -66,7 +66,7 @@ register("packetReceived", (packet, event) => { // Bat death listener
 
     if (getDistanceToCoord(...soundPos, true) > 25) return
 
-    for (let i = 0; i < listeners.length; i++) {
+    for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         if (listener.awaitingBat) continue
         listeners.splice(i, 1)
@@ -88,7 +88,7 @@ register("tick", () => { // Schizo solution for item pickup listener
 
         if (getDistanceToEntity(entity) > 6) continue
 
-        for (let i = 0; i < listeners.length; i++) {
+        for (let i = listeners.length - 1; i >= 0; i--) {
             let listener = listeners[i]
             if (listener.awaitingBat) continue
             listeners.splice(i, 1)
@@ -106,7 +106,7 @@ register("tick", () => { // Wait for bat spawn
 
         if (getDistanceToEntity(bat) > 15) continue
 
-        for (let i = 0; i < listeners.length; i++) {
+        for (let i = listeners.length - 1; i >= 0; i--) {
             let listener = listeners[i]
             if (!listener.awaitingBat) continue
             listeners.splice(i, 1)
@@ -124,12 +124,11 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
 
     if (!listeners.length) return
     cancel(event)
-    for (let i = 0; i < listeners.length; i++) {
+    for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         listeners.splice(i, 1)
         listener.success()
     }
-
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
@@ -142,7 +141,7 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     if (!movementKeys.includes(keyCode)) return
     if (!listeners.length) return
 
-    for (let i = 0; i < listeners.length; i++) {
+    for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         listeners.splice(i, 1)
         listener.fail("You moved. All awaits cancelled.")

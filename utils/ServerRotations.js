@@ -19,8 +19,10 @@ let lastS08Event
 let sending = false
 let preRotating = false
 let renderYaw = 0
+let isEther = false
 
 register("packetSent", (packet, event) => {
+    if (sending) return
     const simpleName = packet.class.getSimpleName()
     if (simpleName === "C06PacketPlayerPosLook" && (ignoreNextC06 || ignoreNextC06NoS08)) {
         ignoreNextC06 = false
@@ -29,7 +31,7 @@ register("packetSent", (packet, event) => {
             return
         }
     }
-    if (sending || !rotating && !preRotating) return
+    if (!rotating && !preRotating) return
 
     cancel(event)
     const wasOnGround = packet.func_149465_i()
@@ -63,7 +65,7 @@ register("packetReceived", (packet, event) => {
     lastS08Event = event
 }).setFilteredClass(S08PacketPlayerPosLook)
 
-export function clickAt(y, p) {
+export function clickAt(y, p, etherwarp = false) {
     yaw = parseFloat(y)
     pitch = parseFloat(p)
     if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat("Invalid rotation! How is this possible?")
@@ -74,6 +76,7 @@ export function clickAt(y, p) {
     if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
     preRotating = false
     renderYaw = yaw
+    isEther = etherwarp
 }
 
 export function prepareRotate(y, p) {
@@ -84,6 +87,7 @@ export function prepareRotate(y, p) {
     preRotating = true
     renderYaw = yaw
     packetsPreRotating = 0
+    isEther = false
 }
 
 export function stopRotating() {
@@ -91,6 +95,7 @@ export function stopRotating() {
     clicking = false
     preRotating = false
     renderYaw = Player.getYaw()
+    isEther = false
 }
 
 export function ignoreNextC06Packet() {
@@ -100,6 +105,8 @@ export function ignoreNextC06Packet() {
 const airClick = () => {
     debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
+    // if (isEther) global.cryleak.autoroutes.ether(yaw, pitch) // This is so fire trust
+    isEther = false
     sendAirClick()
 }
 

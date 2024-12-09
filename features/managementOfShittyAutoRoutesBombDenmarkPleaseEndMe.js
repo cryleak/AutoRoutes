@@ -152,7 +152,7 @@ function getNearestRingIndex() {
 
 // Reset everything
 ringCreation().getConfig().setConfigValue("Ring", "stop", false)
-ringCreation().getConfig().setConfigValue("Ring", "radius", 0.7)
+ringCreation().getConfig().setConfigValue("Ring", "radius", 0.5)
 ringCreation().getConfig().setConfigValue("Ring", "height", 0.1)
 ringCreation().getConfig().setConfigValue("Ring", "type", 0)
 ringCreation().getConfig().setConfigValue("Ring", "itemName", "Aspect of the Void")

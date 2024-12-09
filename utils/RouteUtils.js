@@ -1,4 +1,4 @@
-import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
+import { getDistance3D, getDistanceToCoord, isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
 import { debugMessage, chat } from "./utils"
 import { convertFromRelative, convertToRealYaw } from "./RoomUtils"
 import Settings from "../config"
@@ -42,7 +42,7 @@ export const swapFromItemID = (targetItemID) => {
 let lastSwap = Date.now()
 const swapToSlot = (slot) => {
     if (Player.getHeldItemIndex() === slot) return 1
-    debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
+    chat(`Time since last swap is ${Date.now() - lastSwap}ms.`)
     lastSwap = Date.now()
     Player.setHeldItemIndex(slot)
     return 2
@@ -191,9 +191,6 @@ export const getEyeHeight = () => {
     return Player.getPlayer().func_70047_e()
 }
 
-
-import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
-
 const System = Java.type("java.lang.System")
 /**
  * Gets a valid Yaw/Pitch combination that you can etherwarp to in order to land at a specific block. Has terrible performance.
@@ -201,18 +198,20 @@ const System = Java.type("java.lang.System")
  * @returns Object with yaw and pitch or null if fail
  */
 export function getEtherYawPitch(blockCoords) {
+    const runStart = System.nanoTime()
     const playerCoords = [Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()]
 
     const centeredCoords = centerCoords(blockCoords)
     const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
+    // const topOfBlockRotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.95, centeredCoords[2], true)
     // Return if you can aim at center of the block
     if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) return rotation
-    const lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 1 }
-    const upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 1 }
-    const runStart = System.nanoTime()
+    // else if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(topOfBlockRotation.pitch, topOfBlockRotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) { ChatLib.chat("hi"); return rotation }
+    const lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 3 }
+    const upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 3 }
     let runs = 0
     for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw++) {
-        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.5) {
+        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.3) {
             runs++
             // let prediction = rayTraceEtherBlock(playerCoords, yaw, pitch)
             let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
@@ -223,7 +222,7 @@ export function getEtherYawPitch(blockCoords) {
             }
         }
     }
-    debugMessage(`Failed to find Yaw/Pitch combination. ${runs} attempts. Took ${(System.nanoTime() - runStart) / 1000000}ms`, false)
+    debugMessage(`Failed to find Yaw/Pitch combination. ${runs} attempts. Took ${(System.nanoTime() - runStart) / 1000000}ms. Shoutout to CT performance btw`, false)
     return null
 }
 
