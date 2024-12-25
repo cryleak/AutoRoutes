@@ -107,36 +107,9 @@ export const calcYawPitch = (x, y, z, sneaking = false) => {
 
 export const setWalking = (state) => KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(), state)
 
-let sneaking = Player.isSneaking()
+const sneakKey = new KeyBind(Client.getMinecraft().field_71474_y.field_74311_E)
+export const setSneaking = (state) => sneakKey.setState(state)
 
-export const setSneaking = (state) => {
-    if (state && !sneaking) Client.sendPacket(new C0BPacketEntityAction(Player.getPlayer(), C0BPacketEntityAction.Action.START_SNEAKING))
-    if (!state && sneaking) Client.sendPacket(new C0BPacketEntityAction(Player.getPlayer(), C0BPacketEntityAction.Action.STOP_SNEAKING))
-}
-
-let lastTrigger = Date.now()
-register("packetSent", (packet, event) => {
-    if (!Settings().autoRoutesEnabled) return
-    const action = packet.func_180764_b()
-    if (action == C0BPacketEntityAction.Action.START_SNEAKING) {
-        if (sneaking) cancel(event)
-        else {
-            // debugMessage(`Last sneak packet was ${Date.now() - lastTrigger}ms ago`)
-            lastTrigger = Date.now()
-        }
-        sneaking = true
-    }
-    if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) {
-        if (!sneaking) cancel(event)
-        else {
-            // debugMessage(`Last sneak packet was ${Date.now() - lastTrigger}ms ago`)
-            lastTrigger = Date.now()
-        }
-        sneaking = false
-    }
-}).setFilteredClass(C0BPacketEntityAction)
-
-register("worldUnload", () => sneaking = false)
 
 export const WASDKeys = [
     Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),

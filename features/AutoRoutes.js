@@ -170,7 +170,6 @@ const ringActions = {
         rotate(yaw, pitch)
     },
     etherwarp: (args) => {
-        // new Thread(() => { // This can freeze the main thread for a very long time if the getting ether yaw pitch takes very long if I don't execute it in a new thread. Shoutout to CT btw.
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
         releaseMovementKeys()
         const success = swapFromName("Aspect of The Void")
@@ -186,10 +185,9 @@ const ringActions = {
             moveKeyCooldown = Date.now()
         }
         // U CANT PUT A SCHEDULETASK IN A SCHEDULETASK SO IM JUST USING ASYNC SCHEDULE AND THEN SCHEDULING THE TASK SHOUTOUT TO CT BTW
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 20) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
+        if (success === 2) Async.schedule(() => Client.scheduleTask(1, execRing), 20) // If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
         else execRing()
 
-        // }).start()
     },
     useItem: (args) => {
         ChatLib.chat(args.itemName)
@@ -202,7 +200,7 @@ const ringActions = {
             if (args.stopSneaking) setSneaking(false)
             clickAt(yaw, pitch)
         }
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 20)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(1, execRing), 20)
         else execRing()
     },
     walk: (args) => {
@@ -219,7 +217,7 @@ const ringActions = {
         Async.schedule(() => Client.scheduleTask(0, () => {
             if (Player?.getHeldItem()?.getID() !== 46) return chat("Why aren't you holding a TNT anymore?")
             leftClick()
-        }), 40)
+        }), 20)
     },
     pearlclip: (args) => {
         const success = swapFromName("Ender Pearl")
@@ -228,7 +226,7 @@ const ringActions = {
             clickAt(0, 90)
             registerPearlClip(args.pearlClipDistance)
         }
-        if (success === 2) Async.schedule(() => Client.scheduleTask(0, execRing), 40)
+        if (success === 2) Async.schedule(() => Client.scheduleTask(1, execRing), 20)
         else execRing()
     }
 }
