@@ -10,7 +10,7 @@ let clicking = false
 let rotating = false
 let preRotating = false
 
-register(Java.type("catgirlroutes.events.impl.MotionUpdateEvent").Pre, (event) => {
+register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Pre, (event) => {
     if (!rotating && !preRotating) return
 
     event.yaw = yaw
@@ -19,7 +19,7 @@ register(Java.type("catgirlroutes.events.impl.MotionUpdateEvent").Pre, (event) =
     if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
 })
 
-register(Java.type("catgirlroutes.events.impl.MotionUpdateEvent").Post, (event) => {
+register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Post, () => {
     if (!clicking || !rotating) return
 
     rotating = false

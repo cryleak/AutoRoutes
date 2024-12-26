@@ -3,7 +3,7 @@ import Promise from "../../PromiseV2"
 import Async from "../../Async"
 import addListener from "../events/SecretListener"
 import RenderLibV2 from "../../RenderLibV2"
-import { renderBox, renderScandinavianFlag, chat } from "../utils/utils"
+import { renderBox, renderScandinavianFlag, chat, scheduleTask } from "../utils/utils"
 import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
 import { getEyeHeightSneaking, getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys } from "../utils/RouteUtils"
 import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
@@ -102,8 +102,7 @@ const performActions = () => {
                 let startTime = Date.now()
 
                 new Promise((resolve, reject) => {
-                    if (ring.type === "useItem" && ring.awaitBatSpawn) addListener(() => resolve(Date.now() - startTime), (msg) => reject(msg), true)
-                    else addListener(() => resolve(Date.now() - startTime), (msg) => reject(msg), false)
+                    addListener(() => resolve(Date.now() - startTime), (msg) => reject(msg), ring.type === "useItem" && ring.awaitBatSpawn)
                     if (!ring.delay) preRotate(ring)
                 }).then(secretTime => {
                     playerPosition = playerCoords().player
@@ -176,9 +175,7 @@ const ringActions = {
         if (!success) return
         const rotation = getEtherYawPitchFromArgs(args)
         if (!rotation) return
-        let time = Date.now()
         const execRing = () => {
-            ChatLib.chat(Date.now() - time)
             setSneaking(true)
             clickAt(rotation[0], rotation[1], true)
             moveKeyListener = true
@@ -190,13 +187,10 @@ const ringActions = {
 
     },
     useItem: (args) => {
-        ChatLib.chat(args.itemName)
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         const success = swapFromName(args.itemName)
         if (!success) return
-        let time = Date.now()
         const execRing = () => {
-            ChatLib.chat(Date.now() - time)
             if (args.stopSneaking) setSneaking(false)
             clickAt(yaw, pitch)
         }
@@ -246,22 +240,6 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     }
 })
 
-let packetsSent = 0
-register("packetSent", (packet, event) => {
-    Client.scheduleTask(0, () => {
-        if (event?.isCancelled()) return
-
-        packetsSent++
-    })
-}).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer)
-
-register("step", () => {
-    if (!Settings().debugMessages) return
-    ChatLib.clearChat(89299)
-    new Message(`§0[§6AutoRoutesDebug§0]§f Movement packets sent last second: ${packetsSent}`).setChatLineId(89299).chat()
-    packetsSent = 0
-}).setDelay(1)
-
 const preRotate = (ringArgs) => {
     if (!["look", "etherwarp", "useItem", "walk", "finish", "superboom"].includes(ringArgs.type)) return
 
@@ -276,3 +254,12 @@ const preRotate = (ringArgs) => {
     }
     prepareRotate(yaw, pitch)
 }
+
+register("command", (arg) => {
+    let time = Date.now()
+    scheduleTask(parseInt(arg), () => {
+        scheduleTask(0, () => {
+            ChatLib.chat(Date.now() - time)
+        })
+    })
+}).setName("test")

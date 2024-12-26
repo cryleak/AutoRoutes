@@ -99,3 +99,12 @@ function renderSquare(x, y, z, width, color, thickness, phase = true) {
     GlStateManager.func_179126_j() // enableDepth
     GlStateManager.func_179084_k() // disableBlend
 }
+
+const codeToExec = []
+export function scheduleTask(delay, exec) {
+    Client.scheduleTask(delay, () => codeToExec.push(exec))
+}
+
+register("tick", () => {
+    while (codeToExec.length) codeToExec.pop()()
+})
