@@ -107,8 +107,8 @@ export const calcYawPitch = (x, y, z, sneaking = false) => {
 
 export const setWalking = (state) => KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(), state)
 
-const sneakKey = new KeyBind(Client.getMinecraft().field_71474_y.field_74311_E)
-export const setSneaking = (state) => sneakKey.setState(state)
+export const sneakKey = Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i()
+export const setSneaking = (state) => KeyBinding.func_74510_a(sneakKey, state)
 
 
 export const WASDKeys = [
@@ -134,9 +134,7 @@ export const repressMovementKeys = () => WASDKeys.forEach(keybind => KeyBinding.
 const leftClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147116_af", null)
 leftClickMethod.setAccessible(true)
 
-export const leftClick = () => {
-    leftClickMethod.invoke(Client.getMinecraft(), null)
-}
+export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), null)
 
 let distance
 export const registerPearlClip = (dist) => {
@@ -156,8 +154,10 @@ const pearlclip = register("packetReceived", (packet, event) => {
 
 let slotIndex = Player.getHeldItemIndex()
 export const sendAirClick = () => {
-    if (slotIndex !== Player.getHeldItemIndex()) ChatLib.chat("fucked")
-    Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
+    if (Player.getHeldItemIndex() !== slotIndex) return chat("hi i think y ou just 0 tick swapped or something thats not good fortunately i didnt click so surely you dont get banned")
+    // c08 packets somehow cause illegalstateexceptions in ct modules sometimes also the playerinteract register in ct triggers whenever forge's playerinteract event triggers but for some fucking reason if i register the forge event directly it only works when i manually right click?????????
+    // im using them anyways cause using right click with server rotations is a fucking awful idea
+    Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
 }
 
 register("packetSent", (packet) => {
@@ -256,3 +256,7 @@ export const rayTraceEtherBlock = (pos, yaw, pitch) => {
 export const centerCoords = (blockCoords) => {
     return [blockCoords[0] + (Math.sign(blockCoords[0] === 1) ? -0.5 : 0.5), blockCoords[1], blockCoords[2] + (Math.sign(blockCoords[2] === 1) ? -0.5 : 0.5)]
 }
+
+const rightClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147121_ag", null)
+rightClickMethod.setAccessible(true);
+export const rightClick = () => rightClickMethod.invoke(Client.getMinecraft(), null);

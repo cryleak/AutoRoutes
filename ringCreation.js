@@ -49,16 +49,16 @@ config
     .addSwitch({
         configName: "stopSneaking",
         title: "Stop sneaking",
-        description: "",
+        description: "Makes you stop sneaking.",
         category: "Ring",
-        shouldShow: data => data.type === 2
+        shouldShow: data => data.type === 0 || data.type === 2
     })
     .addDropDown({
         configName: "etherCoordMode",
         title: "Etherwarp Coordinate Mode",
-        description: "RayTrace Scanning may be required for some TPs from certain spots. It may also be extremely laggy and take a long time to complete.\nI don't recommend using coordinate mode idk why I still have it",
+        description: "RayTrace Scanning may be required for some TPs from extremely certain spots, it is very bad generally though. I recommend trying Calculate Yaw/Pitch and Yaw/Pitch before trying it.",
         category: "Ring",
-        options: ["RayTrace Scanning", "Yaw/Pitch", "Yaw/Pitch to Coordinate"],
+        options: ["RayTrace Scanning", "Yaw/Pitch", "Calculate Yaw/Pitch"],
         value: 0,
         shouldShow: data => data.type === 1
     })
@@ -107,7 +107,7 @@ config
     .addTextInput({
         configName: "delay",
         title: "Ring Delay",
-        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.\nDelay needs to be at least 100ms for some rings to work properly.",
+        description: "Time in milliseconds to wait for ring to trigger. This is added on top of await secret if you are using it.\nDelay needs to be at least 100ms for some rings that utilize server rotations to work properly.\nDelay is rounded to the nearest tick.",
         category: "Ring"
     })
 
@@ -117,7 +117,7 @@ export default () => ringCreationGUI.settings
 
 export const ringTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip"]
 export const availableArgs = new Map([
-    ["look", ["yaw", "pitch"]],
+    ["look", ["yaw", "pitch", "stopSneaking"]],
     ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
     ["useItem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
     ["walk", ["yaw", "pitch"]],

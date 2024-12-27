@@ -1,12 +1,11 @@
-import { debugMessage, chat } from "./utils"
-import { rotate, sendAirClick } from "../utils/RouteUtils"
+import { debugMessage, chat, scheduleTask } from "./utils"
+import { rotate, sendAirClick, rightClick } from "../utils/RouteUtils"
 import Settings from "../config"
-import Async from "../../Async"
 import { getDistanceToCoord } from "../../BloomCore/utils/utils"
 let lastTP = Date.now()
 let packetsPreRotating = 0
 let yaw = 0
-// let renderYaw = null
+let renderYaw = null
 let pitch = 0
 let clicking = false
 let rotating = false
@@ -22,9 +21,7 @@ register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Pre, (event) => 
     if (preRotating) packetsPreRotating++
     if (Settings().rotateOnServerRotate) Client.scheduleTask(0, () => rotate(yaw, pitch))
 
-    if (currentPreRotatePosition) {
-        if (getDistanceToCoord(...currentPreRotatePosition, false) > 2.5) stopRotating()
-    }
+    if (currentPreRotatePosition && getDistanceToCoord(...currentPreRotatePosition, false) > 2.5) stopRotating() // Stop prerotating if you move away from where the prerotate started
 
     if (!queuedPreRotates.length) return
     for (let i = queuedPreRotates.length - 1; i >= 0; i--) {
@@ -46,14 +43,13 @@ register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Post, (event) =>
     queuedPreRotate.exec()
 })
 
-/*
 register("renderEntity", (entity) => {
     if (entity.getEntity() !== Player.getPlayer()) return
     if (!renderYaw && renderYaw !== 0) return
+    if (!Settings().renderServerRotation) return
     Player.getPlayer().field_70761_aq = yaw
     Player.getPlayer().field_70759_as = yaw
 })
-    */
 
 export function clickAt(y, p) {
     yaw = parseFloat(y)
@@ -67,7 +63,8 @@ export function clickAt(y, p) {
     preRotating = false
     while (queuedPreRotates.length) queuedPreRotates.pop()
     currentPreRotatePosition = null
-    // renderYaw = yaw
+    renderYaw = yaw
+    Client.scheduleTask(0, () => renderYaw = null)
     if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
 }
 
@@ -78,7 +75,7 @@ export function prepareRotate(y, p, pos) {
         if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${yaw} pitch = ${pitch}`)
 
         preRotating = true
-        // renderYaw = yaw
+        renderYaw = yaw
         packetsPreRotating = 0
     }
     // if (preRotating) return
@@ -87,10 +84,10 @@ export function prepareRotate(y, p, pos) {
         exec()
     } else {
         queuedPreRotates.push({ exec, pos })
-        Async.schedule(() => {
+        scheduleTask(100, () => {
             const index = queuedPreRotates.indexOf(exec)
             if (index !== -1) queuedPreRotates.splice(index, 1)
-        }, 5000)
+        })
     }
     // exec()
 
@@ -102,11 +99,11 @@ export function stopRotating() {
     preRotating = false
     while (queuedPreRotates.length) queuedPreRotates.pop()
     currentPreRotatePosition = null
-    // renderYaw = null
+    renderYaw = null
 }
 
 const airClick = () => {
-    debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
+    // debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
     sendAirClick()
 }

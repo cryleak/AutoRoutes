@@ -103,7 +103,7 @@ function renderSquare(x, y, z, width, color, thickness, phase = true) {
 // This actually fucking works btw it lets you make nested scheduleTasks
 const codeToExec = []
 /**
- * Schedules a task to run in the specified number of ticks. This variant of scheduleTask lets you nest scheduleTasks inside of eachother.
+ * Schedules a task to run in the specified number of ticks. This variant of scheduleTask lets you nest scheduleTasks inside of eachother. Note that it won't work if you trigger it inside a Client.scheduleTask.
  * @param {int} delay Delay in ticks
  * @param {func} exec Code to execute
  */

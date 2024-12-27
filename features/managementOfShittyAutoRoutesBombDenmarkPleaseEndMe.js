@@ -24,6 +24,7 @@ register("command", () => {
 
     config.setConfigValue("Ring", "center", false)
     config.setConfigValue("Ring", "stop", false)
+    config.setConfigValue("Ring", "itemName", Player?.getHeldItem()?.getName() ?? "Aspect of the Void")
     config.setConfigValue("Ring", "etherCoordMode", 1)
     config.setConfigValue("Ring", "yaw", Player.getYaw().toFixed(3))
     config.setConfigValue("Ring", "pitch", Player.getPitch().toFixed(3))
@@ -69,7 +70,7 @@ register("command", (...args) => {
     config.setConfigValue("Ring", "pitch", (parseFloat(ring.pitch) ?? Player.getPitch()).toFixed(3))
     const prediction = rayTraceEtherBlock([Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
     const etherBlock = convertFromRelative(ring.etherBlock) ?? prediction
-    config.setConfigValue("Ring", "itemName", ring.itemName ?? "Aspect of the Void")
+    config.setConfigValue("Ring", "itemName", ring.itemName ?? Player.getHeldItem().getName())
     config.setConfigValue("Ring", "stopSneaking", ring.stopSneaking ?? false)
     config.setConfigValue("Ring", "awaitBatSpawn", ring.awaitBatSpawn ?? false)
     config.setConfigValue("Ring", "etherCoordMode", ring.etherCoordMode)
@@ -158,7 +159,7 @@ ringCreation().getConfig().setConfigValue("Ring", "stop", false)
 ringCreation().getConfig().setConfigValue("Ring", "radius", 0.5)
 ringCreation().getConfig().setConfigValue("Ring", "height", 0.1)
 ringCreation().getConfig().setConfigValue("Ring", "type", 0)
-ringCreation().getConfig().setConfigValue("Ring", "itemName", "Aspect of the Void")
+ringCreation().getConfig().setConfigValue("Ring", "itemName", Player?.getHeldItem()?.getName() ?? "Aspect of the Void")
 ringCreation().getConfig().setConfigValue("Ring", "stopSneaking", false)
 ringCreation().getConfig().setConfigValue("Ring", "etherCoordMode", 1)
 ringCreation().getConfig().setConfigValue("Ring", "yaw", 0)

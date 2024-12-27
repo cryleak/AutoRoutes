@@ -1,11 +1,10 @@
 import Settings from "../config"
 import Promise from "../../PromiseV2"
-import Async from "../../Async"
 import addListener from "../events/SecretListener"
 import RenderLibV2 from "../../RenderLibV2"
 import { renderBox, renderScandinavianFlag, chat, scheduleTask } from "../utils/utils"
 import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
-import { getEyeHeightSneaking, getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys } from "../utils/RouteUtils"
+import { getEyeHeightSneaking, getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey } from "../utils/RouteUtils"
 import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
 import { getDistance2D, drawLine3d } from "../../BloomCore/utils/utils"
@@ -16,6 +15,7 @@ let activeNodes = []
 let activeNodesCoords = []
 let moveKeyListener = false
 let moveKeyCooldown = Date.now()
+let blockUnsneakCooldown = Date.now()
 let autoRoutesEnabled = false
 
 new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
@@ -65,7 +65,6 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
 const actionRegister = register("tick", () => {
     if (!autoRoutesEnabled) return
     if (!Settings().autoRoutesEnabled) return
-    if (Settings().editMode) return
     if (!activeNodes.length) return
     if (!World.isLoaded()) return
 
@@ -87,20 +86,23 @@ const performActions = () => {
             let exec = () => {
                 if (ring.stop) releaseMovementKeys()
                 let execRing = () => {
+                    if (!autoRoutesEnabled) return stopRotating() // Don't execute ring if you disabled autoroutes between the time the ring first triggered and when it executes actions
                     if (ring.center) {
                         Player.getPlayer().func_70107_b(ringPos[0], ringPos[1], ringPos[2])
-                        Client.scheduleTask(0, () => ringActions[ring.type](ring))
+                        scheduleTask(0, () => ringActions[ring.type](ring))
                     } else ringActions[ring.type](ring)
                 }
                 if (ring.delay) {
-                    if (ring.delay >= 100) Async.schedule(() => preRotate(ring, ringPos), ring.delay - 100)
-                    else preRotate(ring, ringPos)
-                    Async.schedule(() => { // Delay if there is a delay set
+                    let execDelay = Math.ceil(parseInt(ring.delay) / 50 - 1) // Round to nearest tick
+                    const preRotateExec = () => preRotate(ring, ringPos)
+                    execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
+
+                    scheduleTask(execDelay, () => { // Delay execution if there is a delay set
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], ringPos[0], ringPos[2])
                         if (distance < ring.radius && Math.abs(playerPosition[1] - ringPos[1]) <= ring.height) scheduleTask(0, execRing)
                         else stopRotating()
-                    }, ring.delay)
+                    })
                 } else execRing()
             }
 
@@ -130,6 +132,7 @@ const performActions = () => {
 
 let lastRoomName
 register("step", () => {
+    if (!World.isLoaded()) return
     if (!Settings().autoRoutesEnabled) return
     if (getRoomName() === lastRoomName) return
     lastRoomName = getRoomName()
@@ -171,6 +174,7 @@ register("command", () => {
 const ringActions = {
     look: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
+        if (args.stopSneaking) setSneaking(false)
         rotate(yaw, pitch)
     },
     etherwarp: (args) => {
@@ -186,6 +190,7 @@ const ringActions = {
                 clickAt(rotation[0], rotation[1], true)
                 moveKeyListener = true
                 moveKeyCooldown = Date.now()
+                blockUnsneakCooldown = Date.now()
             }
             if (success === 2) scheduleTask(0, execRing)// If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
             else execRing()
@@ -212,6 +217,7 @@ const ringActions = {
         setSneaking(false)
     },
     superboom: (args) => {
+        let [origYaw, origPitch] = [Player.getYaw(), Player.getPitch()]
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         rotate(yaw, pitch)
         const success = swapFromItemID(46)
@@ -219,6 +225,7 @@ const ringActions = {
         scheduleTask(0, () => {
             if (Player?.getHeldItem()?.getID() !== 46) return chat("Why aren't you holding a TNT anymore?")
             leftClick()
+            if (!Settings().rotateOnServerRotate) rotate(origYaw, origPitch)
         })
     },
     pearlclip: (args) => {
@@ -233,6 +240,15 @@ const ringActions = {
     }
 }
 
+register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => { // Block unsneaking after etherwarping
+    if (Date.now() - blockUnsneakCooldown > 200) return
+    if (Client.isInGui() || !World.isLoaded()) return
+    const keyCode = Keyboard.getEventKey()
+    if (!keyCode) return
+
+    if (keyCode === sneakKey && Player.isSneaking()) setSneaking(true) // Schizo shit cause you can't cancel a key input event for some reason
+})
+
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
     if (!moveKeyListener) return
     if (Date.now() - moveKeyCooldown < 60) return
@@ -243,7 +259,6 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 
     if (movementKeys.includes(keyCode)) {
         stopRotating()
-        if (!moveKeyListener) return
         moveKeyListener = false
         setSneaking(false)
     }
@@ -264,17 +279,6 @@ const preRotate = (ringArgs, pos) => {
     prepareRotate(yaw, pitch, pos)
 }
 
-register("command", (arg) => {
-    let time = Date.now()
-    scheduleTask(parseInt(arg), () => {
-        scheduleTask(3, () => {
-            scheduleTask(0, () => {
-                ChatLib.chat(Date.now() - time)
-            })
-        })
-    })
-}).setName("test")
-
 register("command", () => { // I can't be bothered to deal with circular imports
     if (!activeNodesCoords.some(node => node.triggered)) return
     actionRegister.unregister()
@@ -282,7 +286,7 @@ register("command", () => { // I can't be bothered to deal with circular imports
         activeNodesCoords[i].triggered = true
     }
 
-    Client.scheduleTask(5, () => {
+    scheduleTask(5, () => {
         actionRegister.register()
         for (let i = 0; i < activeNodes.length; i++) activeNodesCoords[i].triggered = false
     })

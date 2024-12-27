@@ -1,7 +1,6 @@
 import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
 import { movementKeys } from "../utils/RouteUtils"
-import Async from "../../Async"
-
+import { scheduleTask } from "../utils/utils"
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
 
@@ -19,12 +18,12 @@ function addListener(successExec, failExec, awaitingBatSpawn) {
 
     listeners.push(listener)
     moveKeyCooldown = Date.now()
-    Async.schedule(() => {
+    scheduleTask(100, () => {
         const index = listeners.indexOf(listener)
         if (index === -1) return
         listeners.splice(index, 1)
         failExec("Await timed out!")
-    }, 5000)
+    })
 }
 export default addListener
 

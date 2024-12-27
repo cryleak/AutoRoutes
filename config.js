@@ -21,16 +21,16 @@ config
         subcategory: "AutoRoutes"
     })
     .addSwitch({
-        configName: "editMode",
-        title: "Edit Mode",
-        description: "Prevents nodes from triggering.",
+        configName: "rotateOnServerRotate",
+        title: "Rotate",
+        description: "Rotates on nodes that use Server Rotations so you can see where it is looking visually. This is only a visual change.",
         category: "Main",
         subcategory: "AutoRoutes"
     })
     .addSwitch({
-        configName: "rotateOnServerRotate",
-        title: "Rotate",
-        description: "Rotates on nodes that use Server Rotations so you can see where it is looking visually.",
+        configName: "renderServerRotation",
+        title: "Render Server Rotation",
+        description: "Shows you where the player is looking serverside when you go into third person view. Similar to Oringo's feature, but likely worse.",
         category: "Main",
         subcategory: "AutoRoutes"
     })
