@@ -6,6 +6,12 @@ const config = new DefaultConfig("AutoRoutes", "NonexistentConfig.json")
 
 config
     .addSwitch({
+        configName: "center",
+        title: "Center",
+        description: "Puts you in the center of the node position before executing the node. This delays execution by 1 tick so only use it when you actually need to, usually the first ring in an etherwarp chain using Yaw/Pitch mode.",
+        category: "Ring"
+    })
+    .addSwitch({
         configName: "stop",
         title: "Stop",
         description: "Stops all movement when you trigger this node.",
@@ -50,9 +56,9 @@ config
     .addDropDown({
         configName: "etherCoordMode",
         title: "Etherwarp Coordinate Mode",
-        description: "Yaw/Pitch may be required for some TPs from specific spots. Coordinate mode may also be very laggy on worse computers.",
+        description: "RayTrace Scanning may be required for some TPs from certain spots. It may also be extremely laggy and take a long time to complete.\nI don't recommend using coordinate mode idk why I still have it",
         category: "Ring",
-        options: ["Coordinate", "Yaw/Pitch"],
+        options: ["RayTrace Scanning", "Yaw/Pitch", "Yaw/Pitch to Coordinate"],
         value: 0,
         shouldShow: data => data.type === 1
     })
@@ -75,7 +81,7 @@ config
         title: "Etherwarp Block Coordinates",
         description: "Seperated by commas.",
         category: "Ring",
-        shouldShow: data => data.type === 1 && data.etherCoordMode === 0
+        shouldShow: data => data.type === 1 && (data.etherCoordMode === 0 || data.etherCoordMode === 2)
     })
     .addSwitch({
         configName: "awaitSecret",

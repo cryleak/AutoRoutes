@@ -100,7 +100,13 @@ function renderSquare(x, y, z, width, color, thickness, phase = true) {
     GlStateManager.func_179084_k() // disableBlend
 }
 
+// This actually fucking works btw it lets you make nested scheduleTasks
 const codeToExec = []
+/**
+ * Schedules a task to run in the specified number of ticks. This variant of scheduleTask lets you nest scheduleTasks inside of eachother.
+ * @param {int} delay Delay in ticks
+ * @param {func} exec Code to execute
+ */
 export function scheduleTask(delay, exec) {
     Client.scheduleTask(delay, () => codeToExec.push(exec))
 }

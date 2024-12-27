@@ -117,13 +117,14 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
     const state = event.buttonstate
     if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return
 
-    if (!listeners.length) return
-    cancel(event)
-    for (let i = listeners.length - 1; i >= 0; i--) {
-        let listener = listeners[i]
-        listeners.splice(i, 1)
-        listener.success()
-    }
+    if (listeners.length) {
+        cancel(event)
+        for (let i = listeners.length - 1; i >= 0; i--) {
+            let listener = listeners[i]
+            listeners.splice(i, 1)
+            listener.success()
+        }
+    } else ChatLib.command("cleartriggerednodes", true)
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {

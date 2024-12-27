@@ -154,7 +154,15 @@ const pearlclip = register("packetReceived", (packet, event) => {
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
 
 
-export const sendAirClick = () => Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
+let slotIndex = Player.getHeldItemIndex()
+export const sendAirClick = () => {
+    if (slotIndex !== Player.getHeldItemIndex()) ChatLib.chat("fucked")
+    Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getInventory().getStackInSlot(Player.getHeldItemIndex()).getItemStack()))
+}
+
+register("packetSent", (packet) => {
+    slotIndex = packet.func_149614_c()
+}).setFilteredClass(net.minecraft.network.play.client.C09PacketHeldItemChange)
 
 export const getEyeHeightSneaking = () => { // Peak schizo
     return 1.5399999618530273
@@ -176,22 +184,24 @@ export function getEtherYawPitch(blockCoords) {
 
     const centeredCoords = centerCoords(blockCoords)
     const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
-    // const topOfBlockRotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.95, centeredCoords[2], true)
     // Return if you can aim at center of the block
     if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) return rotation
-    // else if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(topOfBlockRotation.pitch, topOfBlockRotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) { ChatLib.chat("hi"); return rotation }
-    const lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 3 }
-    const upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 3 }
     let runs = 0
-    for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw++) {
-        for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += 0.3) {
-            runs++
-            // let prediction = rayTraceEtherBlock(playerCoords, yaw, pitch)
-            let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
-            if (!prediction) continue
-            if (prediction.every((coord, index) => coord === blockCoords[index])) {
-                debugMessage(`Found Yaw/Pitch combination in ${runs} attempts! Took ${(System.nanoTime() - runStart) / 1000000}ms.`, false)
-                return { yaw, pitch }
+    for (let i = 0; i <= 5; i++) { // Exponentially less distance between steps...
+        let lowerLimit = { yaw: rotation.yaw - 1, pitch: rotation.pitch - 3 }
+        let upperLimit = { yaw: rotation.yaw + 1, pitch: rotation.pitch + 3 }
+
+        let yawStepSize = (1 / (1 + i * (2 / 3)))
+        let pitchStepSize = (0.5 / i)
+        for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw += yawStepSize) {
+            for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += pitchStepSize) {
+                runs++
+                let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
+                if (!prediction) continue
+                if (prediction.every((coord, index) => coord === blockCoords[index])) {
+                    debugMessage(`Found Yaw/Pitch combination in ${runs} attempts! Took ${(System.nanoTime() - runStart) / 1000000}ms.`, false)
+                    return { yaw, pitch }
+                }
             }
         }
     }
@@ -215,9 +225,14 @@ export function getEtherYawPitchFromArgs(args) {
         }
         yaw = etherwarpRotation.yaw
         pitch = etherwarpRotation.pitch
-    } else {
+    } else if (args.etherCoordMode === 1) {
         yaw = convertToRealYaw(args.yaw)
         pitch = args.pitch
+    } else {
+        const block = centerCoords(convertFromRelative(args.etherBlock))
+        const rotation = calcYawPitch(block[0], block[1] + 0.9, block[2], true)
+        yaw = rotation.yaw
+        pitch = rotation.pitch
     }
     return [yaw, pitch]
 }

@@ -22,8 +22,9 @@ register("command", () => {
     editingRingIndex = null
     const config = ringCreation().getConfig()
 
+    config.setConfigValue("Ring", "center", false)
     config.setConfigValue("Ring", "stop", false)
-    config.setConfigValue("Ring", "etherCoordMode", 0)
+    config.setConfigValue("Ring", "etherCoordMode", 1)
     config.setConfigValue("Ring", "yaw", Player.getYaw().toFixed(3))
     config.setConfigValue("Ring", "pitch", Player.getPitch().toFixed(3))
     const prediction = rayTraceEtherBlock([Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
@@ -59,6 +60,7 @@ register("command", (...args) => {
 
 
     const config = ringCreation().getConfig()
+    config.setConfigValue("Ring", "center", ring.center)
     config.setConfigValue("Ring", "stop", ring.stop)
     config.setConfigValue("Ring", "radius", ring.radius)
     config.setConfigValue("Ring", "height", ring.height)
@@ -117,7 +119,7 @@ function addRing(args, pos) {
 
     pos = convertToRelative(pos)
 
-    let ring = { type: ringType, position: pos, yOffset: yOffset, radius: parseFloat(args.radius), awaitSecret: args.awaitSecret, height: args.height, delay: parseInt(args.delay), stop: args.stop }
+    let ring = { type: ringType, position: pos, yOffset: yOffset, radius: parseFloat(args.radius), awaitSecret: args.awaitSecret, height: args.height, delay: parseInt(args.delay), stop: args.stop, center: args.center }
     for (let i = 0; i < ringSpecificArgs.length; i++) {
         ring[ringSpecificArgs[i]] = args[ringSpecificArgs[i]]
     }
@@ -151,13 +153,14 @@ function getNearestRingIndex() {
 
 
 // Reset everything
+ringCreation().getConfig().setConfigValue("Ring", "center", false)
 ringCreation().getConfig().setConfigValue("Ring", "stop", false)
 ringCreation().getConfig().setConfigValue("Ring", "radius", 0.5)
 ringCreation().getConfig().setConfigValue("Ring", "height", 0.1)
 ringCreation().getConfig().setConfigValue("Ring", "type", 0)
 ringCreation().getConfig().setConfigValue("Ring", "itemName", "Aspect of the Void")
 ringCreation().getConfig().setConfigValue("Ring", "stopSneaking", false)
-ringCreation().getConfig().setConfigValue("Ring", "etherCoordMode", 0)
+ringCreation().getConfig().setConfigValue("Ring", "etherCoordMode", 1)
 ringCreation().getConfig().setConfigValue("Ring", "yaw", 0)
 ringCreation().getConfig().setConfigValue("Ring", "pitch", 0)
 ringCreation().getConfig().setConfigValue("Ring", "etherBlock", "0,0,0")
