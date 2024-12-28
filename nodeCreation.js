@@ -107,7 +107,7 @@ config
     .addTextInput({
         configName: "delay",
         title: "Node Delay",
-        description: "Time to wait for node to trigger, rounded to the nearest tick.\nIf you are stacking multiple nodes together, each individual node should have a delay of at least 100ms more than the last one. Note this only matters for nodes that use server rotations.",
+        description: "If you are stacking multiple nodes together to perform multiple actions (e.g throwing 2 pearls), each individual node should have a delay of at least 200ms more than the last one. This only matters for nodes that use server rotations.",
         category: "Node"
     })
 

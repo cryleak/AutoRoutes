@@ -192,8 +192,8 @@ export function getEtherYawPitch(blockCoords) {
     if (rayTraceEtherBlock(playerCoords, rotation.yaw, rotation.pitch)?.every((coord, index) => coord === blockCoords[index])) return rotation
     let runs = 0
     for (let i = 0; i <= 10; i++) { // Exponentially less distance between steps...
-        let lowerLimit = { yaw: rotation.yaw - 1, pitch: rotation.pitch - 3 }
-        let upperLimit = { yaw: rotation.yaw + 1, pitch: rotation.pitch + 3 }
+        let lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 4 }
+        let upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 4 }
 
         let yawStepSize = (1 / (1 + i * (2 / 3)))
         let pitchStepSize = (0.5 / (1 + (i * 0.5)))

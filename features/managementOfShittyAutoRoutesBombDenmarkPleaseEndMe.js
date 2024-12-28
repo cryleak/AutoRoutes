@@ -50,6 +50,7 @@ register("command", (...args) => {
     if (!nearestNodeIndex) nearestNodeIndex = getNearestNodeIndex()
 
     const node = roomNodes[nearestNodeIndex]
+    if (!node) return chat("Node doesn't exist!")
     if (!yaw) yaw = (convertToRealYaw(node.yaw) ?? Player.getYaw()).toFixed(3)
     editingNodeIndex = nearestNodeIndex
     nodeCoords = convertFromRelative(node.position)
@@ -90,6 +91,7 @@ register("command", (index) => {
     else {
         indexToDelete = getNearestNodeIndex()
     }
+    if (!roomNodes[indexToDelete]) return chat("Node doesn't exist!")
     let nodeString = "Deleted node: "
     const propertyNames = Object.getOwnPropertyNames(roomNodes[indexToDelete])
     propertyNames.forEach((arg, index) => nodeString += `§b${arg}: §c${roomNodes[indexToDelete][arg]}${index === propertyNames.length - 1 ? "." : ", "}§f`)
