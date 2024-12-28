@@ -7,7 +7,7 @@ import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/Roo
 import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState } from "../utils/RouteUtils"
 import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
-import { getDistance2D, drawLine3d } from "../../BloomCore/utils/utils"
+import { getDistance2D, drawLine3d, getDistanceToCoord } from "../../BloomCore/utils/utils"
 import { Keybind } from "../../KeybindFix"
 import "./managementOfShittyAutoRoutesBombDenmarkPleaseEndMe"
 
@@ -58,7 +58,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
         else if (settings.nodeColorPreset === 3) { // node
             if (extraNodeData.triggered) color = [1, 0, 0]
             else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]
-            RenderLibV2.drawCyl(...position, node.radius, node.radius, -0.01, 40, 1, 90, 0, 0, ...color, 1, false, true)
+            RenderLibV2.drawCyl(...position, node.radius, node.radius, -0.001, 36, 1, 90, 0, 0, ...color, 1, false, true)
         }
         // }
     })
@@ -96,6 +96,7 @@ const performActions = () => {
                 let execNode = () => {
                     if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
                     if (node.center) {
+                        debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
                         Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
                         releaseMovementKeys()
                         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
@@ -201,7 +202,6 @@ const nodeActions = {
                 moveKeyCooldown = Date.now()
                 blockUnsneakCooldown = Date.now()
             }
-            if (success === 2) ChatLib.chat("delayed by 1")
             if (success === 2) scheduleTask(0, execNode)// If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
             else execNode()
         }

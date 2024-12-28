@@ -42,6 +42,14 @@ config
         subcategory: "AutoRoutes",
         value: true
     })
+    .addSwitch({
+        configName: "zeroPingHype",
+        title: "Zero Ping TP",
+        description: "Uses ZPH to use zero ping teleport for Instant Transmission and Wither Impact on node-triggered teleports. Requires a modified version of ZPH to work. Make sure the Yaw/Pitch combination in your Use Item node yields an accurate teleport prediction!",
+        category: "Main",
+        subcategory: "AutoRoutes",
+        value: false
+    })
     .addDropDown({
         configName: "nodeColorPreset",
         title: "Node Color Preset",

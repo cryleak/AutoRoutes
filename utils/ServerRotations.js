@@ -107,7 +107,9 @@ export function stopRotating() {
 const airClick = () => {
     debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
-    sendAirClick()
+    const success = sendAirClick()
+    if (!success) return
+    if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport(Player.getHeldItem())
 }
 
 
