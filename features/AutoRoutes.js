@@ -251,7 +251,7 @@ const nodeActions = {
 }
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => { // Block unsneaking after etherwarping
-    if (Date.now() - blockUnsneakCooldown > 300) return
+    if (Date.now() - blockUnsneakCooldown > 200) return
     if (Client.isInGui() || !World.isLoaded()) return
     const keyState = Keyboard.getEventKeyState()
     const keyCode = Keyboard.getEventKey()
@@ -262,16 +262,18 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
     if (!moveKeyListener) return
-    if (Date.now() - moveKeyCooldown < 300) return
     if (Client.isInGui() || !World.isLoaded()) return
     if (!Keyboard.getEventKeyState()) return
     const keyCode = Keyboard.getEventKey()
     if (!keyCode) return
 
-    if (movementKeys.includes(keyCode)) {
+    if (!movementKeys.includes(keyCode)) return
+    if (Date.now() - moveKeyCooldown > 200 || !isPlayerStandingInNode()) {
         stopRotating()
         moveKeyListener = false
         setSneaking(false)
+    } else {
+        releaseMovementKeys()
     }
 })
 
@@ -303,3 +305,21 @@ register("command", () => { // I can't be bothered to deal with circular imports
     })
     chat("Cleared triggered nodes.")
 }).setName("cleartriggerednodes")
+
+function isPlayerStandingInNode() {
+    return activeNodes?.some((node, i) => {
+        let extraNodeData = activeNodesCoords[i]
+        let nodePos = extraNodeData.position
+        let distance = getDistance2D(Player.getX(), Player.getZ(), nodePos[0], nodePos[2])
+        return (distance < node.radius && Math.abs(Player.getY() - nodePos[1]) <= node.height)
+    })
+}
+
+/*
+const timer = Client.getMinecraft().class.getDeclaredField("field_71428_T")
+const setGameSpeed = (speed) => timer.get(Client.getMinecraft()).field_74278_d = speed
+
+register("command",(speed) => {
+setGameSpeed(parseFloat(speed))
+}).setName("set")
+*/
