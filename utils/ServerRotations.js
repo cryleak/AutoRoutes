@@ -18,6 +18,8 @@ register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Pre, (event) => 
 
     event.yaw = yaw
     event.pitch = pitch
+    // if (preRotating) debugMessage(`prerotating ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()}`)
+    // else if (clicking) debugMessage(`clicked ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
     if (preRotating) packetsPreRotating++
     if (Settings().rotateOnServerRotate) Client.scheduleTask(0, () => rotate(yaw, pitch))
 

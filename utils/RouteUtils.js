@@ -112,7 +112,10 @@ export const getDesiredSneakState = () => {
 export const setSneaking = (state) => {
     desiredState = state
     sneakKeybind.setState(state)
+    KeyBinding.func_74510_a(sneakKey, state)
 }
+
+register("worldUnload", () => desiredState = false)
 
 
 export const WASDKeys = [
@@ -120,6 +123,13 @@ export const WASDKeys = [
     Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
     Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
     Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i()
+]
+
+export const wrappedWASDKeys = [
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74351_w),
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74370_x),
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74366_z),
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74368_y)
 ]
 
 export const movementKeys = [
@@ -131,7 +141,10 @@ export const movementKeys = [
     Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i()
 ]
 
-export const releaseMovementKeys = () => WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, false))
+export const releaseMovementKeys = () => {
+    WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, false))
+    wrappedWASDKeys.forEach(keybind => keybind.setState(false)) // I have no clue if this does anything but keybind behavior is so fucking weird
+}
 export const repressMovementKeys = () => WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, Keyboard.isKeyDown(keybind)))
 
 

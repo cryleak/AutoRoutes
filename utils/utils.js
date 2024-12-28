@@ -113,4 +113,4 @@ export function scheduleTask(delay, exec) {
 
 register("tick", () => {
     while (codeToExec.length) codeToExec.pop()()
-})
+}).setPriority(Priority.LOWEST)

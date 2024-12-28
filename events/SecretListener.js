@@ -31,24 +31,11 @@ register("worldUnload", () => {
     while (listeners.length) listeners.pop()
 })
 
-register("packetSent", (packet, event) => { // Chest open listener
+register("packetSent", (packet, event) => { // Block click listener
     const position = new BlockPos(packet.func_179724_a())
     const [x, y, z] = [position.x, position.y, position.z]
     const blockName = World.getBlockAt(x, y, z).type.getRegistryName()
-    if (!["minecraft:chest", "minecraft:trapped_chest"].includes(blockName)) return
-    for (let i = listeners.length - 1; i >= 0; i--) {
-        let listener = listeners[i]
-        if (listener.awaitingBat) continue
-        listeners.splice(i, 1)
-        listener.success()
-    }
-}).setFilteredClass(C08PacketPlayerBlockPlacement)
-
-register("packetSent", (packet, event) => { // Wither essence listener. Detects all skulls but who cares. It shouldn't matter.
-    const position = new BlockPos(packet.func_179724_a())
-    const [x, y, z] = [position.x, position.y, position.z]
-    const blockName = World.getBlockAt(x, y, z).type.getRegistryName()
-    if (blockName !== "minecraft:skull") return
+    if (!["minecraft:chest", "minecraft:trapped_chest", "minecraft:skull", "minecraft:lever"].includes(blockName)) return
     for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         if (listener.awaitingBat) continue

@@ -43,19 +43,19 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
 
 
         if (extraNodeData.triggered || Date.now() - extraNodeData.lastUse < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
-        if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1 || extraNodeData.triggered && (settings.nodeColorPreset === 2 || settings.nodeColorPreset === 3)) { // dumb shit
+        if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1) { // dumb shit
             if (!color) {
                 if (settings.nodeColorPreset === 0) color = [[0, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [1, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [0, 1, 1]]
                 else if (settings.nodeColorPreset === 1) color = [[settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255], [settings.nodeColor2[0] / 255, settings.nodeColor2[1] / 255, settings.nodeColor2[2] / 255], [settings.nodeColor3[0] / 255, settings.nodeColor3[1] / 255, settings.nodeColor3[2] / 255], [settings.nodeColor4[0] / 255, settings.nodeColor4[1] / 255, settings.nodeColor4[2] / 255], [settings.nodeColor5[0] / 255, settings.nodeColor5[1] / 255, settings.nodeColor5[2] / 255]]
             }
             renderBox(position, node.radius, node.radius * 2, color)
         }
-        else if (settings.nodeColorPreset === 2 || settings.nodeColorPreset === 3) {
-            if (settings.nodeColorPreset === 2) color = [[0, 0, 1], [1, 1, 0]] // sweden
-            else if (settings.nodeColorPreset === 3) color = [[1, 0, 0], [1, 1, 1]] // denmark
-            renderScandinavianFlag(position, node.radius, 0.75, color[0], color[1])
+        else if (settings.nodeColorPreset === 2) {
+            if (!extraNodeData.triggered) color = [[0, 0, 1], [1, 1, 0]] // sweden
+            else color = [[1, 0, 0], [1, 1, 1]] // denmark
+            renderScandinavianFlag(position, node.radius * 2, node.radius, color[0], color[1])
         }
-        else if (settings.nodeColorPreset === 4) { // node
+        else if (settings.nodeColorPreset === 3) { // node
             if (extraNodeData.triggered) color = [1, 0, 0]
             else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]
             RenderLibV2.drawCyl(...position, node.radius, node.radius, -0.01, 40, 1, 90, 0, 0, ...color, 1, false, true)
@@ -88,11 +88,11 @@ const performActions = () => {
             if (Date.now() - extraNodeData.lastUse < 1000) return
             if (extraNodeData.triggered) return
             extraNodeData.triggered = true
+            if (node.stop) {
+                releaseMovementKeys()
+                Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+            }
             let exec = () => {
-                if (node.stop) {
-                    releaseMovementKeys()
-                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-                }
                 let execNode = () => {
                     if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
                     if (node.center) {
@@ -104,14 +104,14 @@ const performActions = () => {
                     nodeActions[node.type](node)
                 }
                 if (node.delay) {
-                    let execDelay = Math.ceil(parseInt(node.delay) / 50 - 1) // Round to nearest tick
+                    let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
                     const preRotateExec = () => preRotate(node, nodePos)
                     execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
 
                     scheduleTask(execDelay, () => { // Delay execution if there is a delay set
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) scheduleTask(0, execNode)
+                        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) execNode()
                         else stopRotating()
                     })
                 } else execNode()
@@ -201,6 +201,7 @@ const nodeActions = {
                 moveKeyCooldown = Date.now()
                 blockUnsneakCooldown = Date.now()
             }
+            if (success === 2) ChatLib.chat("delayed by 1")
             if (success === 2) scheduleTask(0, execNode)// If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
             else execNode()
         }
@@ -250,18 +251,18 @@ const nodeActions = {
 }
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => { // Block unsneaking after etherwarping
-    if (Date.now() - blockUnsneakCooldown > 200) return
+    if (Date.now() - blockUnsneakCooldown > 300) return
     if (Client.isInGui() || !World.isLoaded()) return
     const keyState = Keyboard.getEventKeyState()
     const keyCode = Keyboard.getEventKey()
     if (!keyCode) return
 
-    if (keyCode === sneakKey && getDesiredSneakState() !== keyState) setSneaking(getDesiredSneakState()) // Schizo shit cause you can't cancel a key input event for some reason
+    if (keyCode === sneakKey) setSneaking(getDesiredSneakState()) // Schizo shit cause you can't cancel a key input event for some reason
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
     if (!moveKeyListener) return
-    if (Date.now() - moveKeyCooldown < 60) return
+    if (Date.now() - moveKeyCooldown < 300) return
     if (Client.isInGui() || !World.isLoaded()) return
     if (!Keyboard.getEventKeyState()) return
     const keyCode = Keyboard.getEventKey()
