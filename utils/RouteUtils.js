@@ -170,13 +170,19 @@ const pearlclip = register("packetReceived", (packet, event) => {
 
 
 let slotIndex = Player.getHeldItemIndex()
-export const sendAirClick = () => {
+/**
+ * Sends a C08 with no target block.
+ * @param {exec} exec A specified function to run before the C08 is completed
+ * @returns Success of the air click, false if it didn't click, true if it did
+ */
+export const sendAirClick = (exec) => {
     if (Player.getHeldItemIndex() !== slotIndex) {
         chat("hi i think you just 0 tick swapped or something thats not good fortunately i didnt click so surely you dont get banned")
         return false
     }
     // c08 packets somehow cause illegalstateexceptions in ct modules sometimes also the playerinteract register in ct triggers whenever forge's playerinteract event triggers but for some fucking reason if i register the forge event directly it only works when i manually right click?????????
     // im using them anyways cause using right click with server rotations is a fucking awful idea
+    if (exec) exec()
     Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
     return true
 }

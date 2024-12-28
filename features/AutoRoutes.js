@@ -58,7 +58,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
         else if (settings.nodeColorPreset === 3) { // node
             if (extraNodeData.triggered) color = [1, 0, 0]
             else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]
-            RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, 36, 1, 90, 0, 0, ...color, 1, false, true)
+            RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, settings.ringSlices, 1, 90, 0, 0, ...color, 1, false, true)
         }
         // }
     })

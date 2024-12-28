@@ -107,10 +107,17 @@ export function stopRotating() {
 const airClick = () => {
     debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
-    const success = sendAirClick()
-    if (!success) return
-    if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport(Player.getHeldItem())
+    sendAirClick(() => {
+        if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport() // Makes ZPH allow any type of teleport regardless of if you have it enabled or not on the next teleport
+    })
 }
 
 
 register("worldUnload", stopRotating)
+/*
+register("packetSent", (packet, event) => {
+    if (!packet.func_149466_j()) return
+    if (!packet.func_149463_k()) return
+    ChatLib.chat(`x: ${packet.func_149464_c()}, y: ${packet.func_149467_d()}, z: ${packet.func_149472_e()}, yaw: ${packet.func_149462_g()}, pitch: ${packet.func_149470_h()}`)
+}).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer)
+*/

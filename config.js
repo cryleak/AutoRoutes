@@ -103,6 +103,16 @@ config
         value: [255, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1
     })
+    .addSlider({
+        configName: "ringSlices",
+        title: "Ring Slices",
+        description: "Less looks worse but has better performance.",
+        category: "Visuals",
+        subcategory: "Node",
+        options: [3, 48],
+        value: 36,
+        shouldShow: data => data.nodeColorPreset === 3
+    })
 
 const mySettings = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => mySettings.settings
