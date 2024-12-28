@@ -30,7 +30,7 @@ register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Pre, (event) => 
     }
 })
 
-register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Post, (event) => {
+register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Post, () => {
     if (!clicking || !rotating) return
 
     rotating = false

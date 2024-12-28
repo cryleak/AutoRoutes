@@ -97,8 +97,11 @@ const performActions = () => {
                     if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
                     if (node.center) {
                         Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
-                        scheduleTask(0, () => nodeActions[node.type](node))
-                    } else nodeActions[node.type](node)
+                        releaseMovementKeys()
+                        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                        // scheduleTask(0, () => nodeActions[node.type](node))
+                    }
+                    nodeActions[node.type](node)
                 }
                 if (node.delay) {
                     let execDelay = Math.ceil(parseInt(node.delay) / 50 - 1) // Round to nearest tick

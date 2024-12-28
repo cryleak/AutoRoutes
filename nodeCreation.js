@@ -8,7 +8,7 @@ config
     .addSwitch({
         configName: "center",
         title: "Center",
-        description: "Puts you in the center of the node position before executing the node. This delays execution by 1 tick so only use it when you actually need to, usually the first node in an etherwarp chain using Yaw/Pitch mode.",
+        description: "Puts you right in the center of where the NODE is located. Note that this also modifies your Y level, so it may not work and just lagback if your node is extremely tall.",
         category: "Node"
     })
     .addSwitch({

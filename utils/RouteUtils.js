@@ -191,12 +191,12 @@ export function getEtherYawPitch(blockCoords) {
     // Return if you can aim at center of the block
     if (rayTraceEtherBlock(playerCoords, rotation.yaw, rotation.pitch)?.every((coord, index) => coord === blockCoords[index])) return rotation
     let runs = 0
-    for (let i = 0; i <= 5; i++) { // Exponentially less distance between steps...
-        let lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 4 }
-        let upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 4 }
+    for (let i = 0; i <= 10; i++) { // Exponentially less distance between steps...
+        let lowerLimit = { yaw: rotation.yaw - 1, pitch: rotation.pitch - 3 }
+        let upperLimit = { yaw: rotation.yaw + 1, pitch: rotation.pitch + 3 }
 
-        let yawStepSize = (0.5 / i)
-        let pitchStepSize = (0.5 / i)
+        let yawStepSize = (1 / (1 + i * (2 / 3)))
+        let pitchStepSize = (0.5 / (1 + (i * 0.5)))
         for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw += yawStepSize) {
             for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += pitchStepSize) {
                 runs++
@@ -241,7 +241,7 @@ export function getEtherYawPitchFromArgs(args) {
     return [yaw, pitch]
 }
 
-const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper")
+const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper").INSTANCE
 /**
  * Gets the block an etherwarp from a specified position and yaw/pitch will land on. Uses Odin for RayTracing for vastly higher performance.
  * @param {Array} pos 
@@ -251,14 +251,11 @@ const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper")
  */
 export const rayTraceEtherBlock = (position, yaw, pitch) => {
     // Correct the Y Level because Odin is black and doesn't let you specify eye level yourself so it will be wrong if you're sneaking.
-    const correctedYLevel = parseFloat(position[1]) - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727)
-
-    const prediction = EtherWarpHelper.INSTANCE.getEtherPos(new net.minecraft.util.Vec3(position[0], correctedYLevel, position[2]), yaw, pitch, 61, false)
-    const success = prediction.succeeded
-    if (!success) return null
-    if (!prediction.pos) return null
-    const pos = new BlockPos(prediction.pos)
-    const endBlock = [pos.x, pos.y, pos.z]
+    const prediction = EtherWarpHelper.getEtherPos(new net.minecraft.util.Vec3(position[0], parseFloat(position[1]) - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727), position[2]), yaw, pitch, 61, false)
+    if (!prediction.succeeded) return null
+    const pos = prediction.pos
+    if (!pos) return null
+    const endBlock = [pos.func_177958_n(), pos.func_177956_o(), pos.func_177952_p()]
     return endBlock
 }
 
