@@ -1,13 +1,8 @@
-import { getDistance3D, getDistanceToCoord, isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/utils"
 import { debugMessage, chat } from "./utils"
 import { convertFromRelative, convertToRealYaw } from "./RoomUtils"
-import Settings from "../config"
-import Vector3 from "../../BloomCore/utils/Vector3"
+
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
-const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction")
-
-
 
 /**
  * Swaps to an item in your hotbar with the specified name.
@@ -154,7 +149,7 @@ const pearlclip = register("packetReceived", (packet, event) => {
 
 let slotIndex = Player.getHeldItemIndex()
 export const sendAirClick = () => {
-    if (Player.getHeldItemIndex() !== slotIndex) return chat("hi i think y ou just 0 tick swapped or something thats not good fortunately i didnt click so surely you dont get banned")
+    if (Player.getHeldItemIndex() !== slotIndex) return chat("hi i think you just 0 tick swapped or something thats not good fortunately i didnt click so surely you dont get banned")
     // c08 packets somehow cause illegalstateexceptions in ct modules sometimes also the playerinteract register in ct triggers whenever forge's playerinteract event triggers but for some fucking reason if i register the forge event directly it only works when i manually right click?????????
     // im using them anyways cause using right click with server rotations is a fucking awful idea
     Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
@@ -180,26 +175,26 @@ const System = Java.type("java.lang.System")
  */
 export function getEtherYawPitch(blockCoords) {
     const runStart = System.nanoTime()
-    const playerCoords = [Player.getX(), Player.getY() + getEyeHeightSneaking(), Player.getZ()]
+    const playerCoords = [Player.getX(), Player.getY(), Player.getZ()]
 
     const centeredCoords = centerCoords(blockCoords)
     const rotation = calcYawPitch(centeredCoords[0], centeredCoords[1] + 0.5, centeredCoords[2], true)
     // Return if you can aim at center of the block
-    if (raytraceBlocks(playerCoords, Vector3.fromPitchYaw(rotation.pitch, rotation.yaw), 60, isValidEtherwarpBlock, true, true)?.every((coord, index) => coord === blockCoords[index])) return rotation
+    if (rayTraceEtherBlock(playerCoords, rotation.yaw, rotation.pitch)?.every((coord, index) => coord === blockCoords[index])) return rotation
     let runs = 0
     for (let i = 0; i <= 5; i++) { // Exponentially less distance between steps...
-        let lowerLimit = { yaw: rotation.yaw - 1, pitch: rotation.pitch - 3 }
-        let upperLimit = { yaw: rotation.yaw + 1, pitch: rotation.pitch + 3 }
+        let lowerLimit = { yaw: rotation.yaw - 2, pitch: rotation.pitch - 4 }
+        let upperLimit = { yaw: rotation.yaw + 2, pitch: rotation.pitch + 4 }
 
-        let yawStepSize = (1 / (1 + i * (2 / 3)))
+        let yawStepSize = (0.5 / i)
         let pitchStepSize = (0.5 / i)
         for (let yaw = lowerLimit.yaw; yaw < upperLimit.yaw; yaw += yawStepSize) {
             for (let pitch = lowerLimit.pitch; pitch < upperLimit.pitch; pitch += pitchStepSize) {
                 runs++
-                let prediction = raytraceBlocks(playerCoords, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
+                let prediction = rayTraceEtherBlock(playerCoords, yaw, pitch)
                 if (!prediction) continue
                 if (prediction.every((coord, index) => coord === blockCoords[index])) {
-                    debugMessage(`Found Yaw/Pitch combination in ${runs} attempts! Took ${(System.nanoTime() - runStart) / 1000000}ms.`, false)
+                    debugMessage(`Found Yaw/Pitch combination in ${runs} attempts! Took ${(System.nanoTime() - runStart) / 1000000}ms. Shoutout to CT performance btw`, false)
                     return { yaw, pitch }
                 }
             }
@@ -210,7 +205,7 @@ export function getEtherYawPitch(blockCoords) {
 }
 
 /**
- * Gets yaw and pitch for an etherwarp node from the ring arguments depending on your coordinate mode.
+ * Gets yaw and pitch for an etherwarp node from the node arguments depending on your coordinate mode.
  * @param {Object} args 
  * @returns Array containing yaw and pitch
  */
@@ -237,15 +232,25 @@ export function getEtherYawPitchFromArgs(args) {
     return [yaw, pitch]
 }
 
+const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper")
 /**
- * Gets the block an etherwarp from a specified position and yaw/pitch will land on.
+ * Gets the block an etherwarp from a specified position and yaw/pitch will land on. Uses Odin for RayTracing for vastly higher performance.
  * @param {Array} pos 
  * @param {Number} yaw 
  * @param {Number} pitch 
  * @returns An array containing the etherwarp raytrace position
  */
-export const rayTraceEtherBlock = (pos, yaw, pitch) => {
-    return raytraceBlocks(pos, Vector3.fromPitchYaw(pitch, yaw), 60, isValidEtherwarpBlock, true, true)
+export const rayTraceEtherBlock = (position, yaw, pitch) => {
+    // Correct the Y Level because Odin is black and doesn't let you specify eye level yourself so it will be wrong if you're sneaking.
+    const correctedYLevel = parseFloat(position[1]) - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727)
+
+    const prediction = EtherWarpHelper.INSTANCE.getEtherPos(new net.minecraft.util.Vec3(position[0], correctedYLevel, position[2]), yaw, pitch, 61, true)
+    const success = prediction.succeeded
+    if (!success) return null
+    if (!prediction.pos) return null
+    const pos = new BlockPos(prediction.pos)
+    const endBlock = [pos.x, pos.y, pos.z]
+    return endBlock
 }
 
 /**

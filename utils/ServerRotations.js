@@ -79,7 +79,7 @@ export function prepareRotate(y, p, pos) {
         packetsPreRotating = 0
     }
     // if (preRotating) return
-    if (!preRotating) {
+    if (!preRotating && !clicking && !rotating) {
         currentPreRotatePosition = [...pos]
         exec()
     } else {

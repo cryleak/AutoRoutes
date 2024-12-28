@@ -84,7 +84,7 @@ function renderSquare(x, y, z, width, color, thickness, phase = true) {
 
     GlStateManager.func_179131_c(color[0], color[1], color[2], 1) // color
 
-    const halfWidth = width / 2
+    const halfWidth = width
     worldRenderer.func_181662_b(x + halfWidth, y, z + halfWidth).func_181675_d()
     worldRenderer.func_181662_b(x + halfWidth, y, z - halfWidth).func_181675_d()
     worldRenderer.func_181662_b(x - halfWidth, y, z - halfWidth).func_181675_d()

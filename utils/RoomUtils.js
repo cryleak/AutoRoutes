@@ -94,8 +94,8 @@ const rotateFromNorth = (vector, desiredRotation) => {
 }
 
 const coordRegex = /x=(-?\d+), y=(-?\d+), z=(-?\d+)/;
-const extractCoord = (string) => {
-    const match = string.match(coordRegex);
+const extractCoord = (String) => {
+    const match = String.match(coordRegex);
     if (match) {
         const x = parseInt(match[1], 10);
         const y = parseInt(match[2], 10);

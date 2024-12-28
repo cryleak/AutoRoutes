@@ -6,7 +6,7 @@ Bomb Denmark
 */
 
 import Settings from "./config"
-import "./Features/AutoRoutes"
+import "./features/AutoRoutes"
 
 
 register("command", () => {
