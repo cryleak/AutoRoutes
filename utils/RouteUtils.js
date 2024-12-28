@@ -103,7 +103,16 @@ export const calcYawPitch = (x, y, z, sneaking = false) => {
 export const setWalking = (state) => KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(), state)
 
 export const sneakKey = Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i()
-export const setSneaking = (state) => KeyBinding.func_74510_a(sneakKey, state)
+const sneakKeybind = new KeyBind(Client.getMinecraft().field_71474_y.field_74311_E)
+
+let desiredState = false
+export const getDesiredSneakState = () => {
+    return desiredState
+}
+export const setSneaking = (state) => {
+    desiredState = state
+    sneakKeybind.setState(state)
+}
 
 
 export const WASDKeys = [
@@ -244,7 +253,7 @@ export const rayTraceEtherBlock = (position, yaw, pitch) => {
     // Correct the Y Level because Odin is black and doesn't let you specify eye level yourself so it will be wrong if you're sneaking.
     const correctedYLevel = parseFloat(position[1]) - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727)
 
-    const prediction = EtherWarpHelper.INSTANCE.getEtherPos(new net.minecraft.util.Vec3(position[0], correctedYLevel, position[2]), yaw, pitch, 61, true)
+    const prediction = EtherWarpHelper.INSTANCE.getEtherPos(new net.minecraft.util.Vec3(position[0], correctedYLevel, position[2]), yaw, pitch, 61, false)
     const success = prediction.succeeded
     if (!success) return null
     if (!prediction.pos) return null

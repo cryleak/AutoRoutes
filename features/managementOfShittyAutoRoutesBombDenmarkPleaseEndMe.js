@@ -90,7 +90,10 @@ register("command", (index) => {
     else {
         indexToDelete = getNearestNodeIndex()
     }
-    chat(`Deleted node:\n${JSON.stringify(roomNodes[indexToDelete])}`)
+    let nodeString = "Deleted node: "
+    const propertyNames = Object.getOwnPropertyNames(roomNodes[indexToDelete])
+    propertyNames.forEach((arg, index) => nodeString += `§b${arg}: §c${roomNodes[indexToDelete][arg]}${index === propertyNames.length - 1 ? "." : ", "}§f`)
+    chat(nodeString)
     roomNodes.splice(indexToDelete, 1)
     data.save()
     ChatLib.command("updateroutes", true)

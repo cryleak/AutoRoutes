@@ -2,9 +2,9 @@ import Settings from "../config"
 import Promise from "../../PromiseV2"
 import addListener from "../events/SecretListener"
 import RenderLibV2 from "../../RenderLibV2"
-import { renderBox, renderScandinavianFlag, chat, scheduleTask } from "../utils/utils"
+import { renderBox, renderScandinavianFlag, chat, scheduleTask, debugMessage } from "../utils/utils"
 import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
-import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey } from "../utils/RouteUtils"
+import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState } from "../utils/RouteUtils"
 import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
 import { getDistance2D, drawLine3d } from "../../BloomCore/utils/utils"
@@ -20,8 +20,8 @@ let autoRoutesEnabled = false
 
 new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
     autoRoutesEnabled = !autoRoutesEnabled
-    chat(`AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`)
-    ChatLib.command("cleartriggerednodes", true)
+    ChatLib.clearChat(1337)
+    new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
 })
 
 register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
@@ -29,9 +29,10 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
     if (!settings.autoRoutesEnabled) return
     if (!activeNodes.length) return
     if (!World.isLoaded()) return
-    for (let i = 0; i < activeNodes.length; i++) {
+    // for (let i = 0; i < activeNodes.length; i++) {
+    activeNodes.forEach((node, i) => {
+        // let node = activeNodes[i]
         let extraNodeData = activeNodesCoords[i]
-        let node = activeNodes[i]
         let position = extraNodeData.position
         let color
         if (node.type === "etherwarp" && extraNodeData.etherBlockCoord) {
@@ -59,7 +60,8 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]
             RenderLibV2.drawCyl(...position, node.radius, node.radius, -0.01, 40, 1, 90, 0, 0, ...color, 1, false, true)
         }
-    }
+        // }
+    })
 })
 
 const actionRegister = register("tick", () => {
@@ -72,67 +74,66 @@ const actionRegister = register("tick", () => {
 })
 
 const performActions = () => {
-    try {
-        let playerPosition = playerCoords().player
+    let playerPosition = playerCoords().player
 
-        // for (let i = 0; i < activeNodes.length; i++) {
-        activeNodes.forEach((node, i) => {
-            // let node = activeNodes[i]
-            let extraNodeData = activeNodesCoords[i]
-            let nodePos = extraNodeData.position
-            let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-            if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) {
-                // if (Date.now() - extraNodeData.lastUse < 1000) continue
-                // if (extraNodeData.triggered) continue
-                if (Date.now() - extraNodeData.lastUse < 1000) return
-                if (extraNodeData.triggered) return
-                extraNodeData.triggered = true
-                let exec = () => {
-                    if (node.stop) releaseMovementKeys()
-                    let execNode = () => {
-                        if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
-                        if (node.center) {
-                            Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
-                            scheduleTask(0, () => nodeActions[node.type](node))
-                        } else nodeActions[node.type](node)
-                    }
-                    if (node.delay) {
-                        let execDelay = Math.ceil(parseInt(node.delay) / 50 - 1) // Round to nearest tick
-                        const preRotateExec = () => preRotate(node, nodePos)
-                        execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
-
-                        scheduleTask(execDelay, () => { // Delay execution if there is a delay set
-                            playerPosition = playerCoords().player
-                            let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                            if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) scheduleTask(0, execNode)
-                            else stopRotating()
-                        })
-                    } else execNode()
+    // for (let i = 0; i < activeNodes.length; i++) {
+    activeNodes.forEach((node, i) => {
+        // let node = activeNodes[i]
+        let extraNodeData = activeNodesCoords[i]
+        let nodePos = extraNodeData.position
+        let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) {
+            // if (Date.now() - extraNodeData.lastUse < 1000) continue
+            // if (extraNodeData.triggered) continue
+            if (Date.now() - extraNodeData.lastUse < 1000) return
+            if (extraNodeData.triggered) return
+            extraNodeData.triggered = true
+            let exec = () => {
+                if (node.stop) {
+                    releaseMovementKeys()
+                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
                 }
+                let execNode = () => {
+                    if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
+                    if (node.center) {
+                        Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
+                        scheduleTask(0, () => nodeActions[node.type](node))
+                    } else nodeActions[node.type](node)
+                }
+                if (node.delay) {
+                    let execDelay = Math.ceil(parseInt(node.delay) / 50 - 1) // Round to nearest tick
+                    const preRotateExec = () => preRotate(node, nodePos)
+                    execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
 
-                if (node.awaitSecret || node.type === "useItem" && node.awaitBatSpawn) {
-                    new Promise((resolve, reject) => {
-                        addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useItem" && node.awaitBatSpawn)
-                        if (!node.delay) preRotate(node, nodePos)
-                    }).then(nothing => {
+                    scheduleTask(execDelay, () => { // Delay execution if there is a delay set
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) {
-                            scheduleTask(1, exec)
-                        } else stopRotating()
-                    }, // Nice linter, VS Code.
-                        message => {
-                            stopRotating()
-                            chat(message)
-                        })
+                        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) scheduleTask(0, execNode)
+                        else stopRotating()
+                    })
+                } else execNode()
+            }
 
-                } else exec()
-            } else if (extraNodeData.triggered) extraNodeData.triggered = false
-            // }
-        })
-    } catch (e) {
-        console.log(e)
-    }
+            if (node.awaitSecret || node.type === "useItem" && node.awaitBatSpawn) {
+                new Promise((resolve, reject) => {
+                    addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useItem" && node.awaitBatSpawn)
+                    if (!node.delay) preRotate(node, nodePos)
+                }).then(nothing => {
+                    playerPosition = playerCoords().player
+                    let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+                    if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) {
+                        scheduleTask(1, exec)
+                    } else stopRotating()
+                }, // Nice linter, VS Code.
+                    message => {
+                        stopRotating()
+                        chat(message)
+                    })
+
+            } else exec()
+        } else if (extraNodeData.triggered) extraNodeData.triggered = false
+        // }
+    })
 }
 
 let lastRoomName
@@ -148,7 +149,7 @@ const updateRoutes = () => {
     roomNodes = data.nodes[getRoomName()]
     activeNodes = []
     if (!roomNodes || !roomNodes.length) {
-        return chat("No routes found for this room!")
+        return debugMessage("No routes found for this room!")
     }
 
     activeNodes = roomNodes
@@ -169,7 +170,7 @@ const updateRoutes = () => {
         }
         activeNodesCoords.push(nodeToPush)
     }
-    chat("Routes updated for current room.")
+    debugMessage("Routes updated for current room.")
 }
 
 register("command", () => {
@@ -248,10 +249,11 @@ const nodeActions = {
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => { // Block unsneaking after etherwarping
     if (Date.now() - blockUnsneakCooldown > 200) return
     if (Client.isInGui() || !World.isLoaded()) return
+    const keyState = Keyboard.getEventKeyState()
     const keyCode = Keyboard.getEventKey()
     if (!keyCode) return
 
-    if (keyCode === sneakKey && Player.isSneaking()) setSneaking(true) // Schizo shit cause you can't cancel a key input event for some reason
+    if (keyCode === sneakKey && getDesiredSneakState() !== keyState) setSneaking(getDesiredSneakState()) // Schizo shit cause you can't cancel a key input event for some reason
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
