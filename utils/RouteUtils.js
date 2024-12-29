@@ -1,4 +1,4 @@
-import { debugMessage, chat } from "./utils"
+import { debugMessage, chat, scheduleTask } from "./utils"
 import { convertFromRelative, convertToRealYaw } from "./RoomUtils"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
@@ -153,18 +153,26 @@ leftClickMethod.setAccessible(true)
 
 export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), null)
 
-let distance
-export const registerPearlClip = (dist) => {
-    distance = Math.abs(dist)
+let yPos
+export const registerPearlClip = (pos) => {
+    if (!pos) return
+    yPos = Math.abs(pos)
     pearlclip.register()
+    scheduleTask(20, () => {
+        if (yPos !== Math.abs(pos)) return
+        pearlclip.unregister()
+        yPos = 0
+        chat("Pearlclip timed out!")
+    })
 }
 
 const pearlclip = register("packetReceived", (packet, event) => {
     Client.scheduleTask(0, () => {
         if (event?.isCancelled()) return
         pearlclip.unregister()
-        chat(`Pearlclipped ${distance} blocks down.`)
-        Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()) - distance, Math.floor(Player.getZ()) + 0.5)
+        chat(`Pearlclipped ${(Player.getY() - yPos).toFixed(2)} blocks down.`)
+        Player.getPlayer().func_70107_b(Player.getX(), yPos, Player.getZ())
+        yPos = 0
     })
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
 
@@ -294,3 +302,13 @@ export const centerCoords = (blockCoords) => {
 const rightClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147121_ag", null)
 rightClickMethod.setAccessible(true);
 export const rightClick = () => rightClickMethod.invoke(Client.getMinecraft(), null);
+
+export const findAirOpening = () => { // For use in pearlclip
+    const playerPos = [Player.getX(), Player.getY(), Player.getZ()]
+    for (let i = Math.floor(playerPos[1]); i > 0; i--) {
+        let block1 = World.getBlockAt(playerPos[0], i, playerPos[2]).type.getID()
+        let block2 = World.getBlockAt(playerPos[0], i - 1, playerPos[2]).type.getID()
+        if (block1 === 0 && block2 === 0) return i - 1
+    }
+    return null
+}

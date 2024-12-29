@@ -51,7 +51,7 @@ config
         title: "Stop sneaking",
         description: "Makes you stop sneaking.",
         category: "Node",
-        shouldShow: data => data.type === 0 || data.type === 2
+        shouldShow: data => data.type === 2
     })
     .addDropDown({
         configName: "etherCoordMode",
@@ -100,9 +100,9 @@ config
     .addTextInput({
         configName: "pearlClipDistance",
         title: "Pearl VClip Distance",
-        description: "How many blocks to clip down.",
+        description: "How many blocks to clip down. If this is set to 0 it will attempt to scan for an air opening, however note this may be inaccurate or put you in the fucking void",
         category: "Node",
-        shouldShow: data => data.type === 6
+        shouldShow: data => data.type === 5
     })
     .addTextInput({
         configName: "delay",
@@ -117,7 +117,7 @@ export default () => nodeCreationGUI.settings
 
 export const nodeTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip"]
 export const availableArgs = new Map([
-    ["look", ["yaw", "pitch", "stopSneaking"]],
+    ["look", ["yaw", "pitch"]],
     ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
     ["useItem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
     ["walk", ["yaw", "pitch"]],

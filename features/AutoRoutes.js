@@ -4,7 +4,7 @@ import addListener from "../events/SecretListener"
 import RenderLibV2 from "../../RenderLibV2"
 import { renderBox, renderScandinavianFlag, chat, scheduleTask, debugMessage } from "../utils/utils"
 import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
-import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState } from "../utils/RouteUtils"
+import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState, findAirOpening } from "../utils/RouteUtils"
 import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
 import { getDistance2D, drawLine3d, getDistanceToCoord } from "../../BloomCore/utils/utils"
@@ -20,6 +20,7 @@ let autoRoutesEnabled = false
 
 new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
     autoRoutesEnabled = !autoRoutesEnabled
+    stopRotating()
     ChatLib.clearChat(1337)
     new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
 })
@@ -184,7 +185,6 @@ register("command", () => {
 const nodeActions = {
     look: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
-        if (args.stopSneaking) setSneaking(false)
         rotate(yaw, pitch)
     },
     etherwarp: (args) => {
@@ -195,15 +195,14 @@ const nodeActions = {
             if (!success) return
             const rotation = getEtherYawPitchFromArgs(args)
             if (!rotation) return
-            const execNode = () => {
-                setSneaking(true)
-                clickAt(rotation[0], rotation[1], true)
-                moveKeyListener = true
-                moveKeyCooldown = Date.now()
-                blockUnsneakCooldown = Date.now()
-            }
-            if (success === 2) scheduleTask(0, execNode)// If success is equal to 2 that means you weren't holding the item before and we need to wait a tick for you to actually be holding the item.
-            else execNode()
+            setSneaking(true)
+            if (success === 2) {
+                prepareRotate(rotation[0], rotation[1], [Player.getX(), Player.getY(), Player.getZ()], true) // prerotate 1 tick
+                scheduleTask(0, () => clickAt(rotation[0], rotation[1], true))
+            } else clickAt(rotation[0], rotation[1], true)
+            moveKeyListener = true
+            moveKeyCooldown = Date.now()
+            blockUnsneakCooldown = Date.now()
         }
         // Prevent it from freezing the game if it is raytrace scanning
         if (args.etherCoordMode === 0) new Thread(everything).start()
@@ -213,12 +212,12 @@ const nodeActions = {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         const success = swapFromName(args.itemName)
         if (!success) return
-        const execNode = () => {
-            if (args.stopSneaking) setSneaking(false)
-            clickAt(yaw, pitch)
+        if (args.stopSneaking) setSneaking(false)
+        if (success === 2) {
+            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
+            scheduleTask(0, () => clickAt(yaw, pitch))
         }
-        if (success === 2) scheduleTask(0, execNode)
-        else execNode()
+        else clickAt(yaw, pitch)
     },
     walk: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
@@ -239,14 +238,21 @@ const nodeActions = {
         })
     },
     pearlclip: (args) => {
+        const [yaw, pitch] = [Player.getYaw(), 90]
         const success = swapFromName("Ender Pearl")
         if (!success) return
-        const execNode = () => {
-            clickAt(0, 90)
-            registerPearlClip(args.pearlClipDistance)
+        const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - args.pearlClipDistance
+        if (!clipPos) return chat("Couldn't resolve clip distance.")
+        if (success === 2) {
+            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
+            scheduleTask(0, () => {
+                clickAt(yaw, pitch)
+                registerPearlClip(clipPos)
+            })
+        } else {
+            clickAt(yaw, pitch)
+            registerPearlClip(clipPos)
         }
-        if (success === 2) scheduleTask(0, execNode)
-        else execNode()
     }
 }
 

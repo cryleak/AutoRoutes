@@ -16,10 +16,11 @@ let currentPreRotatePosition = null
 register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Pre, (event) => {
     if (!rotating && !preRotating) return
 
+    if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return
     event.yaw = yaw
     event.pitch = pitch
-    // if (preRotating) debugMessage(`prerotating ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()}`)
-    // else if (clicking) debugMessage(`clicked ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
+    if (preRotating) debugMessage(`prerotating ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()}`)
+    else if (clicking) debugMessage(`clicked ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
     if (preRotating) packetsPreRotating++
     if (Settings().rotateOnServerRotate) Client.scheduleTask(0, () => rotate(yaw, pitch))
 
@@ -54,9 +55,9 @@ register("renderEntity", (entity) => {
 })
 
 export function clickAt(y, p) {
-    yaw = parseFloat(y)
-    pitch = parseFloat(p)
-    if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${yaw} pitch = ${pitch}`)
+    if (!y && y !== 0 || !p && p !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${y} pitch = ${p}`)
+    yaw = y
+    pitch = p
 
     if (preRotating) debugMessage(`Prerotated for ${packetsPreRotating} packets.`)
 
@@ -70,18 +71,20 @@ export function clickAt(y, p) {
     if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
 }
 
-export function prepareRotate(y, p, pos) {
+export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
+    if (!y && y !== 0 || !p && p !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${y} pitch = ${p}`)
     const exec = () => {
-        yaw = parseFloat(y)
-        pitch = parseFloat(p)
-        if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${yaw} pitch = ${pitch}`)
-
+        yaw = y
+        pitch = p
         preRotating = true
         renderYaw = yaw
         packetsPreRotating = 0
     }
-    // if (preRotating) return
-    if (!preRotating && !clicking && !rotating) {
+    if (!preRotating && !clicking && !rotating || cancelAllPreRotates) {
+        if (cancelAllPreRotates) {
+            if (yaw === y && pitch === p) return
+            while (queuedPreRotates.length) queuedPreRotates.pop()
+        }
         currentPreRotatePosition = [...pos]
         exec()
     } else {
