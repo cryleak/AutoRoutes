@@ -72,7 +72,7 @@ config
     .addTextInput({
         configName: "pitch",
         title: "Pitch",
-        description: "Number between -180 and 180.",
+        description: "Number between -90 and 90.",
         category: "Node",
         shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4
     })

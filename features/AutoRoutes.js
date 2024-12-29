@@ -36,9 +36,9 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
         let extraNodeData = activeNodesCoords[i]
         let position = extraNodeData.position
         let color
-        if (node.type === "etherwarp" && extraNodeData.etherBlockCoord) {
+        if (node.type === "etherwarp" && extraNodeData.etherBlockCoord && settings.etherwarpLineColor[3] !== 0) {
             let etherCoords = centerCoords([extraNodeData.etherBlockCoord[0], extraNodeData.etherBlockCoord[1] + 1, extraNodeData.etherBlockCoord[2]])
-            drawLine3d(extraNodeData.position[0], extraNodeData.position[1] + 0.01, extraNodeData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], 0, 1, 1, 1, 2, false)
+            drawLine3d(extraNodeData.position[0], extraNodeData.position[1] + 0.01, extraNodeData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], settings.etherwarpLineColor[0] / 255, settings.etherwarpLineColor[1] / 255, settings.etherwarpLineColor[2] / 255, settings.etherwarpLineColor[3] / 255, 2, false)
         }
         if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...extraNodeData.position, 16777215, true, 0.02, false)
 
@@ -47,7 +47,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
         if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1) { // dumb shit
             if (!color) {
                 if (settings.nodeColorPreset === 0) color = [[0, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [1, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [0, 1, 1]]
-                else if (settings.nodeColorPreset === 1) color = [[settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255], [settings.nodeColor2[0] / 255, settings.nodeColor2[1] / 255, settings.nodeColor2[2] / 255], [settings.nodeColor3[0] / 255, settings.nodeColor3[1] / 255, settings.nodeColor3[2] / 255], [settings.nodeColor4[0] / 255, settings.nodeColor4[1] / 255, settings.nodeColor4[2] / 255], [settings.nodeColor5[0] / 255, settings.nodeColor5[1] / 255, settings.nodeColor5[2] / 255]]
+                else if (settings.nodeColorPreset === 1) color = [[settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]], [settings.nodeColor2[0] / 255, settings.nodeColor2[1] / 255, settings.nodeColor2[2] / 255], [settings.nodeColor3[0] / 255, settings.nodeColor3[1] / 255, settings.nodeColor3[2] / 255], [settings.nodeColor4[0] / 255, settings.nodeColor4[1] / 255, settings.nodeColor4[2] / 255], [settings.nodeColor5[0] / 255, settings.nodeColor5[1] / 255, settings.nodeColor5[2] / 255]
             }
             renderBox(position, node.radius, node.radius * 2, color)
         }
@@ -57,9 +57,9 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             renderScandinavianFlag(position, node.radius * 2, node.radius, color[0], color[1])
         }
         else if (settings.nodeColorPreset === 3) { // node
-            if (extraNodeData.triggered) color = [1, 0, 0]
-            else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]
-            RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, settings.ringSlices, 1, 90, 0, 0, ...color, 1, false, true)
+            if (extraNodeData.triggered) color = [1, 0, 0, 1]
+            else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255, settings.nodeColor1[3] / 255]
+            RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, settings.ringSlices, 1, 90, 0, 0, ...color, false, true)
         }
         // }
     })
@@ -214,7 +214,7 @@ const nodeActions = {
             moveKeyCooldown = Date.now()
             blockUnsneakCooldown = Date.now()
         }
-        // Prevent it from freezing the game if it is raytrace scanning
+        // Prevent it from freezing the game if it is raytrace scanning...
         if (args.etherCoordMode === 0) new Thread(everything).start()
         else everything()
     },

@@ -37,7 +37,7 @@ export const swapFromItemID = (targetItemID) => {
 let lastSwap = Date.now()
 const swapToSlot = (slot) => {
     if (Player.getHeldItemIndex() === slot) return ["ALREADY_HOLDING", slot]
-    chat(`Time since last swap is ${Date.now() - lastSwap}ms.`)
+    debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
     lastSwap = Date.now()
     Player.setHeldItemIndex(slot)
     return ["SWAPPED", slot]

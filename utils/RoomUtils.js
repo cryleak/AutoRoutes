@@ -62,7 +62,8 @@ export const convertToRelativeYaw = (yaw) => {
 export const getRoomName = () => {
     let roomName = dungeonUtils.INSTANCE.currentRoomName
     if (roomName === "Unknown") {
-        const tabList = TabList.getUnformattedNames()
+        // i gave up on this
+        // const tabList = TabList.getUnformattedNames()
 
         // tabList.forEach((str, i) => ChatLib.chat([str, i].toString()))
     }

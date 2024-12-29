@@ -11,28 +11,32 @@ config
         title: "Toggle AutoRoutes",
         description: "",
         category: "Main",
-        subcategory: "AutoRoutes"
+        subcategory: "AutoRoutes",
+        value: false
     })
     .addSwitch({
         configName: "displayIndex",
         title: "Display index of nodes on screen",
         description: "Helpful for deleting and editing nodes.",
         category: "Main",
-        subcategory: "AutoRoutes"
+        subcategory: "AutoRoutes",
+        value: false
     })
     .addSwitch({
         configName: "rotateOnServerRotate",
         title: "Rotate",
         description: "Rotates on nodes that use Server Rotations so you can see where it is looking visually. This is only a visual change.",
         category: "Main",
-        subcategory: "AutoRoutes"
+        subcategory: "AutoRoutes",
+        value: false
     })
     .addSwitch({
         configName: "renderServerRotation",
         title: "Render Server Rotation",
         description: "Shows you where the player is looking serverside when you go into third person view. Similar to Oringo's feature, but likely worse.",
         category: "Main",
-        subcategory: "AutoRoutes"
+        subcategory: "AutoRoutes",
+        value: true
     })
     .addSwitch({
         configName: "debugMessages",
@@ -56,7 +60,16 @@ config
         description: "Select an option",
         category: "Visuals",
         options: ["Trans", "Custom", "Sweden", "Ring"],
-        value: 0
+        value: 3
+    })
+    .addColorPicker({
+        configName: "etherwarpLineColor",
+        title: "Etherwarp Line Color",
+        description: "",
+        category: "Visuals",
+        subcategory: "Node",
+        value: [0, 255, 255, 255],
+        shouldShow: data => data.nodeColorPreset === 1 || data.nodeColorPreset === 3
     })
     .addColorPicker({
         configName: "nodeColor1",
@@ -64,7 +77,7 @@ config
         description: "",
         category: "Visuals",
         subcategory: "Node",
-        value: [255, 255, 255, 255],
+        value: [0, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1 || data.nodeColorPreset === 3
     })
     .addColorPicker({
@@ -73,7 +86,7 @@ config
         description: "",
         category: "Visuals",
         subcategory: "Node",
-        value: [255, 255, 255, 255],
+        value: [0, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1
     })
     .addColorPicker({
@@ -82,7 +95,7 @@ config
         description: "",
         category: "Visuals",
         subcategory: "Node",
-        value: [255, 255, 255, 255],
+        value: [0, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1
     })
     .addColorPicker({
@@ -91,7 +104,7 @@ config
         description: "",
         category: "Visuals",
         subcategory: "Node",
-        value: [255, 255, 255, 255],
+        value: [0, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1
     })
     .addColorPicker({
@@ -100,7 +113,7 @@ config
         description: "",
         category: "Visuals",
         subcategory: "Node",
-        value: [255, 255, 255, 255],
+        value: [0, 255, 255, 255],
         shouldShow: data => data.nodeColorPreset === 1
     })
     .addSlider({
@@ -110,7 +123,7 @@ config
         category: "Visuals",
         subcategory: "Node",
         options: [3, 48],
-        value: 36,
+        value: 24,
         shouldShow: data => data.nodeColorPreset === 3
     })
 
