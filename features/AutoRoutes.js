@@ -83,7 +83,9 @@ const performActions = () => {
         let extraNodeData = activeNodesCoords[i]
         let nodePos = extraNodeData.position
         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) {
+        let yDistance = playerPosition[1] - nodePos[1]
+        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
+            ChatLib.chat(yDistance)
             // if (Date.now() - extraNodeData.lastUse < 1000) continue
             // if (extraNodeData.triggered) continue
             if (Date.now() - extraNodeData.lastUse < 1000) return
@@ -113,7 +115,8 @@ const performActions = () => {
                     scheduleTask(execDelay, () => { // Delay execution if there is a delay set
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                        if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) execNode()
+                        let yDistance = playerPosition[1] - nodePos[1]
+                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) execNode()
                         else stopRotating()
                     })
                 } else execNode()
@@ -126,7 +129,8 @@ const performActions = () => {
                 }).then(nothing => {
                     playerPosition = playerCoords().player
                     let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                    if (distance < node.radius && Math.abs(playerPosition[1] - nodePos[1]) <= node.height) {
+                    let yDistance = playerPosition[1] - nodePos[1]
+                    if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
                         scheduleTask(1, exec)
                     } else stopRotating()
                 }, // Nice linter, VS Code.
@@ -335,7 +339,8 @@ function isPlayerStandingInNode() {
         let extraNodeData = activeNodesCoords[i]
         let nodePos = extraNodeData.position
         let distance = getDistance2D(Player.getX(), Player.getZ(), nodePos[0], nodePos[2])
-        return (distance < node.radius && Math.abs(Player.getY() - nodePos[1]) <= node.height)
+        let yDistance = playerPosition[1] - nodePos[1]
+        return (distance < node.radius && yDistance <= node.height && yDistance >= 0)
     })
 }
 

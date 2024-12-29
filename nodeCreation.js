@@ -85,7 +85,7 @@ config
     })
     .addSwitch({
         configName: "awaitSecret",
-        title: "Await secrets and skulls (such as redstone skull).",
+        title: "Await secret, skull or lever click.",
         description: "",
         category: "Node",
         shouldShow: data => !data.awaitBatSpawn || data.type !== 2
