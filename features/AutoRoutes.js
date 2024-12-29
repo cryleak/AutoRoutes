@@ -192,14 +192,21 @@ const nodeActions = {
             Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             releaseMovementKeys()
             const success = swapFromName("Aspect of The Void")
-            if (!success) return
+            if (success[0] === "CANT_FIND") return
             const rotation = getEtherYawPitchFromArgs(args)
             if (!rotation) return
             setSneaking(true)
-            if (success === 2) {
+            const clickExec = () => {
+                if (success[1] !== Player.getHeldItemIndex()) {
+                    stopRotating()
+                    return chat("You are somehow holding the wrong item...")
+                }
+                clickAt(rotation[0], rotation[1], true)
+            }
+            if (success[0] === "SWAPPED") {
                 prepareRotate(rotation[0], rotation[1], [Player.getX(), Player.getY(), Player.getZ()], true) // prerotate 1 tick
-                scheduleTask(0, () => clickAt(rotation[0], rotation[1], true))
-            } else clickAt(rotation[0], rotation[1], true)
+                scheduleTask(0, clickExec)
+            } else clickExec()
             moveKeyListener = true
             moveKeyCooldown = Date.now()
             blockUnsneakCooldown = Date.now()
@@ -209,15 +216,21 @@ const nodeActions = {
         else everything()
     },
     useItem: (args) => {
-        let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
+        const [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         const success = swapFromName(args.itemName)
-        if (!success) return
+        if (success[0] === "CANT_FIND") return
         if (args.stopSneaking) setSneaking(false)
-        if (success === 2) {
-            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
-            scheduleTask(0, () => clickAt(yaw, pitch))
+        const clickExec = () => {
+            if (success[1] !== Player.getHeldItemIndex()) {
+                stopRotating()
+                return chat("You are somehow holding the wrong item...")
+            }
+            clickAt(yaw, pitch)
         }
-        else clickAt(yaw, pitch)
+        if (success[0] === "SWAPPED") {
+            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
+            scheduleTask(0, clickExec)
+        } else clickExec()
     },
     walk: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
@@ -226,13 +239,16 @@ const nodeActions = {
         setSneaking(false)
     },
     superboom: (args) => {
-        let [origYaw, origPitch] = [Player.getYaw(), Player.getPitch()]
-        let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
+        const [origYaw, origPitch] = [Player.getYaw(), Player.getPitch()]
+        const [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         rotate(yaw, pitch)
         const success = swapFromItemID(46)
-        if (!success) return
+        if (success[0] === "CANT_FIND") return
         scheduleTask(0, () => {
-            if (Player?.getHeldItem()?.getID() !== 46) return chat("Why aren't you holding a TNT anymore?")
+            if (success[1] !== Player.getHeldItemIndex()) {
+                stopRotating()
+                return chat("You are somehow holding the wrong item...")
+            }
             leftClick()
             if (!Settings().rotateOnServerRotate) rotate(origYaw, origPitch)
         })
@@ -240,19 +256,21 @@ const nodeActions = {
     pearlclip: (args) => {
         const [yaw, pitch] = [Player.getYaw(), 90]
         const success = swapFromName("Ender Pearl")
-        if (!success) return
+        if (success[0] === "CANT_FIND") return
         const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - args.pearlClipDistance
         if (!clipPos) return chat("Couldn't resolve clip distance.")
-        if (success === 2) {
-            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
-            scheduleTask(0, () => {
-                clickAt(yaw, pitch)
-                registerPearlClip(clipPos)
-            })
-        } else {
+        const clickExec = () => {
+            if (success[1] !== Player.getHeldItemIndex()) {
+                stopRotating()
+                return chat("You are somehow holding the wrong item...")
+            }
             clickAt(yaw, pitch)
             registerPearlClip(clipPos)
         }
+        if (success[0] === "SWAPPED") {
+            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
+            scheduleTask(0, clickExec)
+        } else clickExec()
     }
 }
 

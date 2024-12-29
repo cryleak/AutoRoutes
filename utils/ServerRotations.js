@@ -111,7 +111,12 @@ const airClick = () => {
     debugMessage(`Time between this TP and last: ${Date.now() - lastTP}ms`); lastTP = Date.now()
     clicking = false
     sendAirClick(() => {
-        if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport() // Makes ZPH allow any type of teleport regardless of if you have it enabled or not on the next teleport
+        try {
+            if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport() // Makes ZPH allow any type of teleport regardless of if you have it enabled or not on the next teleport
+        } catch (e) {
+            console.log(e)
+            chat("Error, check console or something")
+        }
     })
 }
 

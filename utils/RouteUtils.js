@@ -7,13 +7,13 @@ const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
 /**
  * Swaps to an item in your hotbar with the specified name.
  * @param {String} targetItemName - Target item name
- * @returns false if it can't find the item, 1 if you are already holding it, 2 if you aren't already holding it
+ * @returns An array containing 2 items: the success of the swap and the slot index.
  */
 export const swapFromName = (targetItemName) => {
     const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.toLowerCase()?.includes(targetItemName.toLowerCase()))
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
-        return false
+        return ["CANT_FIND", itemSlot]
     } else {
         return swapToSlot(itemSlot)
     }
@@ -22,13 +22,13 @@ export const swapFromName = (targetItemName) => {
 /**
  * Swaps to an item in your hotbar with the specified Item ID.
  * @param {String} targetItemID - Target Item ID
- * @returns false if it can't find the item, 1 if you are already holding it, 2 if you aren't already holding it
+ * @returns An array containing 2 items: the success of the swap and the slot index.
  */
 export const swapFromItemID = (targetItemID) => {
     const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getID() == targetItemID)
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find Item ID ${targetItemID} in your hotbar`)
-        return false
+        return ["CANT_FIND", itemSlot]
     } else {
         return swapToSlot(itemSlot)
     }
@@ -36,11 +36,11 @@ export const swapFromItemID = (targetItemID) => {
 
 let lastSwap = Date.now()
 const swapToSlot = (slot) => {
-    if (Player.getHeldItemIndex() === slot) return 1
+    if (Player.getHeldItemIndex() === slot) return ["ALREADY_HOLDING", slot]
     chat(`Time since last swap is ${Date.now() - lastSwap}ms.`)
     lastSwap = Date.now()
     Player.setHeldItemIndex(slot)
-    return 2
+    return ["SWAPPED", slot]
 }
 
 /**
@@ -180,7 +180,7 @@ const pearlclip = register("packetReceived", (packet, event) => {
 let slotIndex = Player.getHeldItemIndex()
 /**
  * Sends a C08 with no target block.
- * @param {exec} exec A specified function to run before the C08 is completed
+ * @param {exec} exec A specified function to run before the C08 is sent
  * @returns Success of the air click, false if it didn't click, true if it did
  */
 export const sendAirClick = (exec) => {
@@ -190,6 +190,7 @@ export const sendAirClick = (exec) => {
     }
     // c08 packets somehow cause illegalstateexceptions in ct modules sometimes also the playerinteract register in ct triggers whenever forge's playerinteract event triggers but for some fucking reason if i register the forge event directly it only works when i manually right click?????????
     // im using them anyways cause using right click with server rotations is a fucking awful idea
+    // nevermind it only happens in singleplayer (for some reason playerinteract triggers on the server thread when you send a c08 and that gets registered by ct so shoutout)
     if (exec) exec()
     Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
     return true
