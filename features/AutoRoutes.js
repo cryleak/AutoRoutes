@@ -85,7 +85,6 @@ const performActions = () => {
         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
         let yDistance = playerPosition[1] - nodePos[1]
         if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-            ChatLib.chat(yDistance)
             // if (Date.now() - extraNodeData.lastUse < 1000) continue
             // if (extraNodeData.triggered) continue
             if (Date.now() - extraNodeData.lastUse < 1000) return
@@ -275,6 +274,14 @@ const nodeActions = {
             prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
             scheduleTask(0, clickExec)
         } else clickExec()
+    },
+    command: (args) => {
+        try {
+            ChatLib.command(args.commandArgs, args.runClientSide)
+        } catch (e) {
+            console.log(e)
+            chat("Error trying to execute command!")
+        }
     }
 }
 
@@ -339,7 +346,7 @@ function isPlayerStandingInNode() {
         let extraNodeData = activeNodesCoords[i]
         let nodePos = extraNodeData.position
         let distance = getDistance2D(Player.getX(), Player.getZ(), nodePos[0], nodePos[2])
-        let yDistance = playerPosition[1] - nodePos[1]
+        let yDistance = Player.getY() - nodePos[1]
         return (distance < node.radius && yDistance <= node.height && yDistance >= 0)
     })
 }

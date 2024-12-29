@@ -82,8 +82,8 @@ export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
     }
     if (!preRotating && !clicking && !rotating || cancelAllPreRotates) {
         if (cancelAllPreRotates) {
-            if (yaw === y && pitch === p) return
             while (queuedPreRotates.length) queuedPreRotates.pop()
+            if (yaw === y && pitch === p) return
         }
         currentPreRotatePosition = [...pos]
         exec()

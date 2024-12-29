@@ -8,7 +8,7 @@ config
     .addSwitch({
         configName: "center",
         title: "Center",
-        description: "Puts you right in the center of where the NODE is located. Note that this also modifies your Y level, so it may not work and just lagback if your node is extremely tall.",
+        description: "Puts you right in the center of where the NODE is located. Note that this also modifies your Y level, so it may not work and just lagback if your node is extremely tall. Useful to align yourself if you aren't starting in the middle of the block.",
         category: "Node"
     })
     .addSwitch({
@@ -36,7 +36,7 @@ config
         title: "Node type",
         description: "Select an option",
         category: "Node",
-        options: ["Look", "Etherwarp", "Use Item", "Walk", "Superboom", "Pearl VClip"],
+        options: ["Look", "Etherwarp", "Use Item", "Walk", "Superboom", "Pearl VClip", "Command"],
         value: 0
     })
     .addTextInput({
@@ -49,7 +49,7 @@ config
     .addSwitch({
         configName: "stopSneaking",
         title: "Stop sneaking",
-        description: "Makes you stop sneaking.",
+        description: "Makes you stop sneaking before executing the node.",
         category: "Node",
         shouldShow: data => data.type === 2
     })
@@ -85,7 +85,7 @@ config
     })
     .addSwitch({
         configName: "awaitSecret",
-        title: "Await secret, skull or lever click.",
+        title: "Await secret pickup, skull or lever click",
         description: "",
         category: "Node",
         shouldShow: data => !data.awaitBatSpawn || data.type !== 2
@@ -93,16 +93,30 @@ config
     .addSwitch({
         configName: "awaitBatSpawn",
         title: "Await bat spawning",
-        description: "",
+        description: "Waits for a bat to spawn within 15 blocks of you. Used so you can kill it after it spawns or something idk",
         category: "Node",
         shouldShow: data => !data.awaitSecret && data.type === 2
     })
     .addTextInput({
         configName: "pearlClipDistance",
         title: "Pearl VClip Distance",
-        description: "How many blocks to clip down. If this is set to 0 it will attempt to scan for an air opening, however note this may be inaccurate or put you in the fucking void",
+        description: "How many blocks to clip down. If this is set to 0 it will attempt to scan for an air opening below you, however note this may be inaccurate or put you in the fucking void",
         category: "Node",
         shouldShow: data => data.type === 5
+    })
+    .addTextInput({
+        configName: "commandArgs",
+        title: "Command",
+        description: "Make sure to omit the first backslash.",
+        category: "Node",
+        shouldShow: data => data.type === 6
+    })
+    .addSwitch({
+        configName: "runClientSide",
+        title: "Run Clientside",
+        description: "",
+        category: "Node",
+        shouldShow: data => data.type === 6
     })
     .addTextInput({
         configName: "delay",
@@ -115,12 +129,13 @@ config
 const nodeCreationGUI = new Settings("AutoRoutes", config, "ColorScheme.json")
 export default () => nodeCreationGUI.settings
 
-export const nodeTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip"]
+export const nodeTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip", "command"]
 export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
     ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
     ["useItem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
     ["walk", ["yaw", "pitch"]],
     ["superboom", ["yaw", "pitch"]],
-    ["pearlclip", ["pearlClipDistance"]]
+    ["pearlclip", ["pearlClipDistance"]],
+    ["command", ["commandArgs", "runClientSide"]]
 ])

@@ -1,8 +1,6 @@
 import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
 import { movementKeys } from "../utils/RouteUtils"
 import { scheduleTask } from "../utils/utils"
-const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
-
 
 const listeners = []
 
@@ -42,9 +40,9 @@ register("packetSent", (packet, event) => { // Block click listener
         listeners.splice(i, 1)
         listener.success()
     }
-}).setFilteredClass(C08PacketPlayerBlockPlacement)
+}).setFilteredClass(net.minecraft.network.play.client.C08PacketPlayerBlockPlacement)
 
-register("packetReceived", (packet, event) => { // Bat death listener
+register("packetReceived", (packet) => { // Bat death listener
     const name = packet.func_149212_c();
     if (name !== "mob.bat.hurt") return
 
