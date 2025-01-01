@@ -30,39 +30,42 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
     if (!settings.autoRoutesEnabled) return
     if (!activeNodes.length) return
     if (!World.isLoaded()) return
-    // for (let i = 0; i < activeNodes.length; i++) {
-    activeNodes.forEach((node, i) => {
-        // let node = activeNodes[i]
+    for (let i = 0; i < activeNodes.length; i++) {
+        let node = activeNodes[i]
         let extraNodeData = activeNodesCoords[i]
-        let position = extraNodeData.position
-        let color
-        if (node.type === "etherwarp" && extraNodeData.etherBlockCoord && settings.etherwarpLineColor[3] !== 0) {
-            let etherCoords = centerCoords([extraNodeData.etherBlockCoord[0], extraNodeData.etherBlockCoord[1] + 1, extraNodeData.etherBlockCoord[2]])
-            drawLine3d(extraNodeData.position[0], extraNodeData.position[1] + 0.01, extraNodeData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], settings.etherwarpLineColor[0] / 255, settings.etherwarpLineColor[1] / 255, settings.etherwarpLineColor[2] / 255, settings.etherwarpLineColor[3] / 255, 2, false)
-        }
-        if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...extraNodeData.position, 16777215, true, 0.02, false)
-
-
-        if (extraNodeData.triggered || Date.now() - extraNodeData.lastUse < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
-        if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1) { // dumb shit
-            if (!color) {
-                if (settings.nodeColorPreset === 0) color = [[0, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [1, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [0, 1, 1]]
-                else if (settings.nodeColorPreset === 1) color = [[settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]], [settings.nodeColor2[0] / 255, settings.nodeColor2[1] / 255, settings.nodeColor2[2] / 255], [settings.nodeColor3[0] / 255, settings.nodeColor3[1] / 255, settings.nodeColor3[2] / 255], [settings.nodeColor4[0] / 255, settings.nodeColor4[1] / 255, settings.nodeColor4[2] / 255], [settings.nodeColor5[0] / 255, settings.nodeColor5[1] / 255, settings.nodeColor5[2] / 255]
+        try {
+            let position = extraNodeData.position
+            let color
+            if (node.type === "etherwarp" && extraNodeData.etherBlockCoord && settings.etherwarpLineColor[3] !== 0) {
+                let etherCoords = centerCoords([extraNodeData.etherBlockCoord[0], extraNodeData.etherBlockCoord[1] + 1, extraNodeData.etherBlockCoord[2]])
+                drawLine3d(extraNodeData.position[0], extraNodeData.position[1] + 0.01, extraNodeData.position[2], etherCoords[0], etherCoords[1] + 0.01, etherCoords[2], settings.etherwarpLineColor[0] / 255, settings.etherwarpLineColor[1] / 255, settings.etherwarpLineColor[2] / 255, settings.etherwarpLineColor[3] / 255, 2, false)
             }
-            renderBox(position, node.radius, node.radius * 2, color)
+            if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...extraNodeData.position, 16777215, true, 0.02, false)
+
+
+            if (extraNodeData.triggered || Date.now() - extraNodeData.lastUse < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
+            if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1) { // dumb shit
+                if (!color) {
+                    if (settings.nodeColorPreset === 0) color = [[0, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [1, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [0, 1, 1]]
+                    else if (settings.nodeColorPreset === 1) color = [[settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255]], [settings.nodeColor2[0] / 255, settings.nodeColor2[1] / 255, settings.nodeColor2[2] / 255], [settings.nodeColor3[0] / 255, settings.nodeColor3[1] / 255, settings.nodeColor3[2] / 255], [settings.nodeColor4[0] / 255, settings.nodeColor4[1] / 255, settings.nodeColor4[2] / 255], [settings.nodeColor5[0] / 255, settings.nodeColor5[1] / 255, settings.nodeColor5[2] / 255]
+                }
+                renderBox(position, node.radius, node.radius * 2, color)
+            }
+            else if (settings.nodeColorPreset === 2) {
+                if (!extraNodeData.triggered) color = [[0, 0, 1], [1, 1, 0]] // sweden
+                else color = [[1, 0, 0], [1, 1, 1]] // denmark
+                renderScandinavianFlag(position, node.radius * 2, node.radius, color[0], color[1])
+            }
+            else if (settings.nodeColorPreset === 3) { // node
+                if (extraNodeData.triggered) color = [1, 0, 0, 1]
+                else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255, settings.nodeColor1[3] / 255]
+                RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, settings.ringSlices, 1, 90, 0, 0, ...color, false, true)
+            }
         }
-        else if (settings.nodeColorPreset === 2) {
-            if (!extraNodeData.triggered) color = [[0, 0, 1], [1, 1, 0]] // sweden
-            else color = [[1, 0, 0], [1, 1, 1]] // denmark
-            renderScandinavianFlag(position, node.radius * 2, node.radius, color[0], color[1])
+        catch (e) {
+            return chat(`send this to me: ${extraNodeData?.toString() ?? "null"}`)
         }
-        else if (settings.nodeColorPreset === 3) { // node
-            if (extraNodeData.triggered) color = [1, 0, 0, 1]
-            else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255, settings.nodeColor1[3] / 255]
-            RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, settings.ringSlices, 1, 90, 0, 0, ...color, false, true)
-        }
-        // }
-    })
+    }
 })
 
 const actionRegister = register("tick", () => {
@@ -78,9 +81,9 @@ const performActions = () => {
     let playerPosition = playerCoords().player
 
     // for (let i = 0; i < activeNodes.length; i++) {
-    activeNodes.forEach((node, i) => {
-        // let node = activeNodes[i]
-        let extraNodeData = activeNodesCoords[i]
+    activeNodesCoords?.forEach((extraNodeData, i) => {
+        let node = activeNodes[i]
+        // let extraNodeData = activeNodesCoords[i]
         let nodePos = extraNodeData.position
         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
         let yDistance = playerPosition[1] - nodePos[1]
@@ -145,13 +148,13 @@ const performActions = () => {
 }
 
 let lastRoomName
-register("step", () => {
+register("tick", () => {
     if (!World.isLoaded()) return
     if (!Settings().autoRoutesEnabled) return
     if (getRoomName() === lastRoomName) return
     lastRoomName = getRoomName()
     updateRoutes()
-}).setFps(10)
+})
 
 const updateRoutes = () => {
     roomNodes = data.nodes[getRoomName()]
@@ -165,18 +168,24 @@ const updateRoutes = () => {
     for (let i = 0; i < activeNodes.length; i++) {
         let nodeToPush = {}
         let node = activeNodes[i]
-        let [x, y, z] = convertFromRelative(node.position) // What the fuck is this
-        x += 0.5
-        y += node.yOffset
-        z += 0.5
-        nodeToPush.position = [x, y, z]
-        nodeToPush.triggered = false
-        nodeToPush.lastUse = 0
-        if (node.type === "etherwarp") {
-            if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = convertFromRelative(node.etherBlock)
-            else nodeToPush.etherBlockCoord = rayTraceEtherBlock([x, y, z], convertToRealYaw(node.yaw), node.pitch)
+        try {
+            let [x, y, z] = convertFromRelative(node.position)
+            x += 0.5
+            y += node.yOffset
+            z += 0.5
+            nodeToPush.position = [x, y, z]
+            nodeToPush.triggered = false
+            nodeToPush.lastUse = 0
+            if (node.type === "etherwarp") {
+                if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = convertFromRelative(node.etherBlock)
+                else nodeToPush.etherBlockCoord = rayTraceEtherBlock([x, y, z], convertToRealYaw(node.yaw), node.pitch)
+            }
+            activeNodesCoords[i] = nodeToPush
+        } catch (e) {
+            chat(`send this to me: ${node?.toString() ?? "null"}`)
+            console.log(e)
+            return
         }
-        activeNodesCoords.push(nodeToPush)
     }
     debugMessage("Routes updated for current room.")
 }
