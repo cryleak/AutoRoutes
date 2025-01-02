@@ -149,7 +149,6 @@ const performActions = () => {
 
 let lastRoomName
 register("tick", () => {
-    ChatLib.chat(getRoomName())
     if (!World.isLoaded()) return
     if (!Settings().autoRoutesEnabled) return
     if (getRoomName() === lastRoomName) return

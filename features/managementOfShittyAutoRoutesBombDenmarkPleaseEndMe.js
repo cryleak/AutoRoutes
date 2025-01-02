@@ -6,15 +6,46 @@ import { data } from "../utils/routesData"
 import { getDistance3D } from "../../BloomCore/utils/utils"
 import nodeCreation from "../nodeCreation"
 
+const dependencyChecks = { // sigma
+    showItemName: (data) => data.type === 2,
+    showStopSneaking: (data) => data.type === 2,
+    showEtherCoordMode: (data) => data.type === 1,
+    showYaw: (data) => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4,
+    showPitch: (data) => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4,
+    showEtherBlock: (data) => data.type === 1 && (data.etherCoordMode === 0 || data.etherCoordMode === 2),
+    showAwaitSecret: (data) => !data.awaitBatSpawn || data.type !== 2,
+    showAwaitBatSpawn: (data) => !data.awaitSecret && data.type === 2,
+    showPearlClipDistance: (data) => data.type === 5,
+    showCommandArgs: (data) => data.type === 6,
+    showRunClientSide: (data) => data.type === 6
+}
+
 let nodeCoords = null
 let editingNodeIndex = null
 let editing = false
 
 register("guiClosed", (gui) => {
     if (!editing) return
-    if (!(gui instanceof gg.essential.vigilance.gui.SettingsGui)) return
+    if (!(gui instanceof Java.type("gg.essential.vigilance.gui.SettingsGui"))) return
     editing = false
     addNode(nodeCreation, nodeCoords)
+})
+
+register("tick", () => {
+    if (!editing) return
+    let reopen = false
+    Object.getOwnPropertyNames(dependencyChecks).forEach(value => {
+        const state = dependencyChecks[value](nodeCreation)
+        if (nodeCreation[value] !== state) {
+            reopen = true
+            nodeCreation[value] = state
+        }
+    })
+    if (reopen) {
+        editing = false
+        nodeCreation.openGUI()
+        Client.scheduleTask(1, () => editing = true)
+    }
 })
 
 register("command", () => {
@@ -32,15 +63,14 @@ register("command", () => {
     nodeCreation.awaitBatSpawn = false
     nodeCreation.runClientside = false
     nodeCreation.commandArgs = ""
-    nodeCreation.delay = 0
+    nodeCreation.delay = "0"
     nodeCreation.pearlClipDistance = "20"
 
 
 
-    editing = true
-    nodeCreation.openGui()
+    nodeCreation.openGUI()
+    Client.scheduleTask(1, () => editing = true)
 }).setName("createnode")
-/*
 register("command", (...args) => {
     const roomNodes = data.nodes[getRoomName()]
     if (!roomNodes || !roomNodes.length) return chat("No nodes found for this room!")
@@ -62,30 +92,29 @@ register("command", (...args) => {
     nodeCoords[1] = Math.floor(nodeCoords[1]) + node.yOffset
 
 
-    // const config = nodeCreation().getConfig()
-    config.setConfigValue("Node", "center", node.center)
-    config.setConfigValue("Node", "stop", node.stop)
-    config.setConfigValue("Node", "radius", node.radius)
-    config.setConfigValue("Node", "height", node.height)
-    config.setConfigValue("Node", "type", nodeTypes.indexOf(node.type))
-    config.setConfigValue("Node", "yaw", yaw)
-    config.setConfigValue("Node", "pitch", (parseFloat(node.pitch) ?? Player.getPitch()).toFixed(3))
+    nodeCreation.center = node.center
+    nodeCreation.stop = node.stop
+    nodeCreation.radius = node.radius
+    nodeCreation.height = node.height.toString()
+    nodeCreation.type = nodeTypes.indexOf(node.type)
+    nodeCreation.yaw = yaw
+    nodeCreation.pitch = (parseFloat(node.pitch) ?? Player.getPitch()).toFixed(3)
     const prediction = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
     const etherBlock = convertFromRelative(node.etherBlock) ?? prediction
-    config.setConfigValue("Node", "itemName", node.itemName ?? Player.getHeldItem().getName())
-    config.setConfigValue("Node", "stopSneaking", node.stopSneaking ?? false)
-    config.setConfigValue("Node", "awaitBatSpawn", node.awaitBatSpawn ?? false)
-    config.setConfigValue("Node", "etherCoordMode", node.etherCoordMode)
-    config.setConfigValue("Node", "etherBlock", etherBlock.toString())
-    config.setConfigValue("Node", "awaitSecret", node.awaitSecret)
-    config.setConfigValue("Node", "runClientSide", node.runClientSide ?? true)
-    config.setConfigValue("Node", "commandArgs", node.commandArgs ?? "")
-    config.setConfigValue("Node", "delay", node.delay)
-    config.setConfigValue("Node", "pearlClipDistance", node.pearlClipDistance ?? "20")
+    nodeCreation.itemName = node.itemName ?? Player?.getHeldItem()?.getName()
+    nodeCreation.stopSneaking = node.stopSneaking ?? false
+    nodeCreation.awaitBatSpawn = node.awaitBatSpawn ?? false
+    nodeCreation.etherCoordMode = node.etherCoordMode ?? 0
+    nodeCreation.etherBlock = etherBlock?.toString() ?? "0,0,0"
+    nodeCreation.awaitSecret = node.awaitSecret ?? false
+    nodeCreation.runClientSide = node.runClientSide ?? true
+    nodeCreation.commandArgs = node.commandArgs ?? ""
+    nodeCreation.delay = node.delay.toString()
+    nodeCreation.pearlClipDistance = node.pearlClipDistance ?? "20"
 
-    nodeCreation().getConfig().openGui()
+    nodeCreation.openGUI()
+    Client.scheduleTask(1, () => editing = true)
 }).setName("editnode")
-*/
 
 register("command", (index) => {
     const roomNodes = data.nodes[getRoomName()]
@@ -163,11 +192,10 @@ function getNearestNodeIndex() {
 
 
 // Reset everything
-/*
 nodeCreation.center = false
 nodeCreation.stop = false
 nodeCreation.radius = 0.5
-nodeCreation.height = 0.1
+nodeCreation.height = "0.1"
 nodeCreation.type = 0
 nodeCreation.itemName = Player?.getHeldItem()?.getName() ?? "Aspect of the Void"
 nodeCreation.stopSneaking = false
@@ -180,4 +208,3 @@ nodeCreation.runClientSide = true
 nodeCreation.commandArgs = ""
 nodeCreation.delay = 0
 nodeCreation.pearlClipDistance = 20
-*/

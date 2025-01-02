@@ -5,6 +5,18 @@ class Settings {
     constructor() {
         this.initialize(this);
         this.setCategoryDescription("Route", "x.");
+        this.addDependency("Item name to use", "show itemName")
+        this.addDependency("Stop sneaking", "show stopSneaking")
+        this.addDependency("Etherwarp Coordinate Mode", "show etherCoordMode")
+        this.addDependency("Yaw", "show yaw")
+        this.addDependency("Pitch", "show pitch")
+        this.addDependency("Etherwarp Block Coordinates", "show etherBlock")
+        this.addDependency("Await secret pickup, skull or lever click", "show awaitSecret")
+        this.addDependency("Await bat spawning", "show awaitBatSpawn")
+        this.addDependency("Pearl VClip Distance", "show pearlClipDistance")
+        this.addDependency("Command", "show commandArgs")
+        this.addDependency("Run Clientside", "show runClientSide")
+
     }
 
     @SwitchProperty({
@@ -29,7 +41,14 @@ class Settings {
         maxF: 2,
         decimalPlaces: 2
     })
-    radius = 0.5
+    radius = 0.5;
+
+    @TextProperty({
+        name: "Height",
+        description: "Height of the node.",
+        category: "Route",
+    })
+    height = "0.1";
 
     @SelectorProperty({
         name: "Node type",
@@ -37,7 +56,7 @@ class Settings {
         category: "Route",
         options: ["Look", "Etherwarp", "Use Item", "Walk", "Superboom", "Pearl VClip", "Command"]
     })
-    type = 0
+    type = 1;
 
 
     @TextProperty({
@@ -61,7 +80,7 @@ class Settings {
         category: "Route",
         options: ["RayTrace Scanning", "Yaw/Pitch", "Calculate Yaw/Pitch"]
     })
-    etherCoordMode = 0
+    etherCoordMode = 0;
 
     @TextProperty({
         name: "Yaw",
@@ -125,6 +144,75 @@ class Settings {
         category: "Route"
     })
     delay = ""
+
+    @SwitchProperty({
+        name: "show itemName",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showItemName = false
+
+    @SwitchProperty({
+        name: "show stopSneaking",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showStopSneaking = false
+    @SwitchProperty({
+        name: "show etherCoordMode",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showEtherCoordMode = false
+    @SwitchProperty({
+        name: "show yaw",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showYaw = false
+    @SwitchProperty({
+        name: "show pitch",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showPitch = false
+    @SwitchProperty({
+        name: "show etherBlock",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showEtherBlock = false
+    @SwitchProperty({
+        name: "show awaitSecret",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showAwaitSecret = false
+
+    @SwitchProperty({
+        name: "show awaitBatSpawn",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showAwaitBatSpawn = false
+    @SwitchProperty({
+        name: "show pearlClipDistance",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showPearlClipDistance = false
+    @SwitchProperty({
+        name: "show commandArgs",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showCommandArgs = false
+    @SwitchProperty({
+        name: "show runClientSide",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showRunClientSide = false
 }
 
 export default new Settings()
