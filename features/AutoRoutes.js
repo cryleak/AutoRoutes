@@ -63,7 +63,8 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             }
         }
         catch (e) {
-            return chat(`send this to me: ${extraNodeData?.toString() ?? "null"}`)
+            chat(`send this to me: ${extraNodeData?.toString() ?? "null"}`)
+            return Client.scheduleTask(5, updateRoutes)
         }
     }
 })
@@ -82,68 +83,74 @@ const performActions = () => {
 
     // for (let i = 0; i < activeNodes.length; i++) {
     activeNodesCoords?.forEach((extraNodeData, i) => {
-        let node = activeNodes[i]
-        // let extraNodeData = activeNodesCoords[i]
-        let nodePos = extraNodeData.position
-        let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-        let yDistance = playerPosition[1] - nodePos[1]
-        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-            // if (Date.now() - extraNodeData.lastUse < 1000) continue
-            // if (extraNodeData.triggered) continue
-            if (Date.now() - extraNodeData.lastUse < 1000) return
-            if (extraNodeData.triggered) return
-            extraNodeData.triggered = true
-            if (node.stop) {
-                releaseMovementKeys()
-                Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-            }
-            let exec = () => {
-                let execNode = () => {
-                    if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
-                    if (node.center) {
-                        debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
-                        Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
-                        releaseMovementKeys()
-                        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-                        // scheduleTask(0, () => nodeActions[node.type](node))
-                    }
-                    nodeActions[node.type](node)
+        try {
+            let node = activeNodes[i]
+            // let extraNodeData = activeNodesCoords[i]
+            let nodePos = extraNodeData.position
+            let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+            let yDistance = playerPosition[1] - nodePos[1]
+            if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
+                // if (Date.now() - extraNodeData.lastUse < 1000) continue
+                // if (extraNodeData.triggered) continue
+                if (Date.now() - extraNodeData.lastUse < 1000) return
+                if (extraNodeData.triggered) return
+                extraNodeData.triggered = true
+                if (node.stop) {
+                    releaseMovementKeys()
+                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
                 }
-                if (node.delay) {
-                    let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
-                    const preRotateExec = () => preRotate(node, nodePos)
-                    execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
+                let exec = () => {
+                    let execNode = () => {
+                        if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
+                        if (node.center) {
+                            debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
+                            Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
+                            releaseMovementKeys()
+                            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                            // scheduleTask(0, () => nodeActions[node.type](node))
+                        }
+                        nodeActions[node.type](node)
+                    }
+                    if (node.delay) {
+                        let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
+                        const preRotateExec = () => preRotate(node, nodePos)
+                        execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
 
-                    scheduleTask(execDelay, () => { // Delay execution if there is a delay set
+                        scheduleTask(execDelay, () => { // Delay execution if there is a delay set
+                            playerPosition = playerCoords().player
+                            let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+                            let yDistance = playerPosition[1] - nodePos[1]
+                            if (distance < node.radius && yDistance <= node.height && yDistance >= 0) execNode()
+                            else stopRotating()
+                        })
+                    } else execNode()
+                }
+
+                if (node.awaitSecret || node.type === "useItem" && node.awaitBatSpawn) {
+                    new Promise((resolve, reject) => {
+                        addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useItem" && node.awaitBatSpawn)
+                        if (!node.delay) preRotate(node, nodePos)
+                    }).then(nothing => {
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
                         let yDistance = playerPosition[1] - nodePos[1]
-                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) execNode()
-                        else stopRotating()
-                    })
-                } else execNode()
-            }
+                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
+                            scheduleTask(1, exec)
+                        } else stopRotating()
+                    }, // Nice linter, VS Code.
+                        message => {
+                            stopRotating()
+                            chat(message)
+                        })
 
-            if (node.awaitSecret || node.type === "useItem" && node.awaitBatSpawn) {
-                new Promise((resolve, reject) => {
-                    addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useItem" && node.awaitBatSpawn)
-                    if (!node.delay) preRotate(node, nodePos)
-                }).then(nothing => {
-                    playerPosition = playerCoords().player
-                    let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                    let yDistance = playerPosition[1] - nodePos[1]
-                    if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-                        scheduleTask(1, exec)
-                    } else stopRotating()
-                }, // Nice linter, VS Code.
-                    message => {
-                        stopRotating()
-                        chat(message)
-                    })
-
-            } else exec()
-        } else if (extraNodeData.triggered) extraNodeData.triggered = false
-        // }
+                } else exec()
+            } else if (extraNodeData.triggered) extraNodeData.triggered = false
+            // }
+        } catch (e) {
+            chat("error check console or something")
+            console.log(e)
+            return Client.scheduleTask(5, updateRoutes)
+        }
     })
 }
 
@@ -184,7 +191,7 @@ const updateRoutes = () => {
         } catch (e) {
             chat(`send this to me: ${node?.toString() ?? "null"}`)
             console.log(e)
-            return updateRoutes() // try again, i dont care about recursion errors surely this fixes it
+            return Client.scheduleTask(5, updateRoutes) // try again, surely this fixes it
         }
     }
     debugMessage("Routes updated for current room.")
