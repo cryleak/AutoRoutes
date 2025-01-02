@@ -180,11 +180,11 @@ const updateRoutes = () => {
                 if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = convertFromRelative(node.etherBlock)
                 else nodeToPush.etherBlockCoord = rayTraceEtherBlock([x, y, z], convertToRealYaw(node.yaw), node.pitch)
             }
-            activeNodesCoords[i] = nodeToPush
+            activeNodesCoords.push(nodeToPush)
         } catch (e) {
             chat(`send this to me: ${node?.toString() ?? "null"}`)
             console.log(e)
-            return
+            return updateRoutes() // try again, i dont care about recursion errors surely this fixes it
         }
     }
     debugMessage("Routes updated for current room.")
