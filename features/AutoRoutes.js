@@ -64,7 +64,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
         }
         catch (e) {
             chat(`send this to me: ${extraNodeData?.toString() ?? "null"}`)
-            return Client.scheduleTask(5, updateRoutes)
+            return scheduleTask(5, updateRoutes)
         }
     }
 })
@@ -149,7 +149,7 @@ const performActions = () => {
         } catch (e) {
             chat("error check console or something")
             console.log(e)
-            return Client.scheduleTask(5, updateRoutes)
+            return scheduleTask(5, updateRoutes)
         }
     })
 }
@@ -191,7 +191,7 @@ const updateRoutes = () => {
         } catch (e) {
             chat(`send this to me: ${node?.toString() ?? "null"}`)
             console.log(e)
-            return Client.scheduleTask(5, updateRoutes) // try again, surely this fixes it
+            return scheduleTask(5, updateRoutes) // try again, surely this fixes it
         }
     }
     debugMessage("Routes updated for current room.")
