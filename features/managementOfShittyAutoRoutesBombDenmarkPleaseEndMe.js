@@ -1,43 +1,46 @@
 import { nodeTypes, availableArgs } from "../nodeCreation"
 import { chat } from "../utils/utils"
 import { convertToRelative, convertFromRelative, getRoomName, convertToRelativeYaw, convertToRealYaw } from "../utils/RoomUtils"
-import { playerCoords, getEyeHeightSneaking, rayTraceEtherBlock } from "../utils/RouteUtils"
+import { playerCoords, rayTraceEtherBlock } from "../utils/RouteUtils"
 import { data } from "../utils/routesData"
 import { getDistance3D } from "../../BloomCore/utils/utils"
 import nodeCreation from "../nodeCreation"
 
 let nodeCoords = null
 let editingNodeIndex = null
+let editing = false
 
-nodeCreation().getConfig().onCloseGui(() => {
-    addNode(nodeCreation(), nodeCoords)
+register("guiClosed", (gui) => {
+    if (!editing) return
+    if (!(gui instanceof gg.essential.vigilance.gui.SettingsGui)) return
+    editing = false
+    addNode(nodeCreation, nodeCoords)
 })
 
 register("command", () => {
     nodeCoords = playerCoords().camera
     editingNodeIndex = null
-    const config = nodeCreation().getConfig()
 
-    config.setConfigValue("Node", "center", false)
-    config.setConfigValue("Node", "stop", false)
-    config.setConfigValue("Node", "itemName", Player?.getHeldItem()?.getName() ?? "Aspect of the Void")
-    config.setConfigValue("Node", "etherCoordMode", 2)
-    config.setConfigValue("Node", "yaw", Player.getYaw().toFixed(3))
-    config.setConfigValue("Node", "pitch", Player.getPitch().toFixed(3))
-    const prediction = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
-    config.setConfigValue("Node", "etherBlock", prediction.toString())
-    config.setConfigValue("Node", "awaitSecret", false)
-    config.setConfigValue("Node", "awaitBatSpawn", false)
-    config.setConfigValue("Node", "runClientSide", true)
-    config.setConfigValue("Node", "commandArgs", "")
-    config.setConfigValue("Node", "delay", 0)
-    config.setConfigValue("Node", "pearlClipDistance", "20")
+    nodeCreation.center = false
+    nodeCreation.stop = false
+    nodeCreation.itemName = Player?.getHeldItem()?.getName() ?? "Aspect of the Void"
+    nodeCreation.etherCoordMode = 2
+    nodeCreation.yaw = Player.getYaw().toFixed(3)
+    nodeCreation.pitch = Player.getPitch().toFixed(3)
+    nodeCreation.etherBlock = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0"
+    nodeCreation.awaitSecret = false
+    nodeCreation.awaitBatSpawn = false
+    nodeCreation.runClientside = false
+    nodeCreation.commandArgs = ""
+    nodeCreation.delay = 0
+    nodeCreation.pearlClipDistance = "20"
 
 
 
-    nodeCreation().getConfig().openGui()
+    editing = true
+    nodeCreation.openGui()
 }).setName("createnode")
-
+/*
 register("command", (...args) => {
     const roomNodes = data.nodes[getRoomName()]
     if (!roomNodes || !roomNodes.length) return chat("No nodes found for this room!")
@@ -59,7 +62,7 @@ register("command", (...args) => {
     nodeCoords[1] = Math.floor(nodeCoords[1]) + node.yOffset
 
 
-    const config = nodeCreation().getConfig()
+    // const config = nodeCreation().getConfig()
     config.setConfigValue("Node", "center", node.center)
     config.setConfigValue("Node", "stop", node.stop)
     config.setConfigValue("Node", "radius", node.radius)
@@ -82,6 +85,7 @@ register("command", (...args) => {
 
     nodeCreation().getConfig().openGui()
 }).setName("editnode")
+*/
 
 register("command", (index) => {
     const roomNodes = data.nodes[getRoomName()]
@@ -159,19 +163,21 @@ function getNearestNodeIndex() {
 
 
 // Reset everything
-nodeCreation().getConfig().setConfigValue("Node", "center", false)
-nodeCreation().getConfig().setConfigValue("Node", "stop", false)
-nodeCreation().getConfig().setConfigValue("Node", "radius", 0.5)
-nodeCreation().getConfig().setConfigValue("Node", "height", 0.1)
-nodeCreation().getConfig().setConfigValue("Node", "type", 0)
-nodeCreation().getConfig().setConfigValue("Node", "itemName", Player?.getHeldItem()?.getName() ?? "Aspect of the Void")
-nodeCreation().getConfig().setConfigValue("Node", "stopSneaking", false)
-nodeCreation().getConfig().setConfigValue("Node", "etherCoordMode", 2)
-nodeCreation().getConfig().setConfigValue("Node", "yaw", 0)
-nodeCreation().getConfig().setConfigValue("Node", "pitch", 0)
-nodeCreation().getConfig().setConfigValue("Node", "etherBlock", "0,0,0")
-nodeCreation().getConfig().setConfigValue("Node", "awaitSecret", false)
-nodeCreation().getConfig().setConfigValue("Node", "runClientSide", true)
-nodeCreation().getConfig().setConfigValue("Node", "commandArgs", "")
-nodeCreation().getConfig().setConfigValue("Node", "delay", 0)
-nodeCreation().getConfig().setConfigValue("Node", "pearlClipDistance", "20")
+/*
+nodeCreation.center = false
+nodeCreation.stop = false
+nodeCreation.radius = 0.5
+nodeCreation.height = 0.1
+nodeCreation.type = 0
+nodeCreation.itemName = Player?.getHeldItem()?.getName() ?? "Aspect of the Void"
+nodeCreation.stopSneaking = false
+nodeCreation.etherCoordMode = 2
+nodeCreation.yaw = 0
+nodeCreation.pitch = 0
+nodeCreation.etherBlock = "0,0,0"
+nodeCreation.awaitSecret = false
+nodeCreation.runClientSide = true
+nodeCreation.commandArgs = ""
+nodeCreation.delay = 0
+nodeCreation.pearlClipDistance = 20
+*/

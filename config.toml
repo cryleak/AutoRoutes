@@ -1,0 +1,13 @@
+
+[route]
+	pearl_vclip_distance = ""
+	node_delay = ""
+	await_bat_spawning = false
+	center = false
+	etherwarp_block_coordinates = ""
+	"await_secret_pickup,_skull_or_lever_click" = false
+	pitch = ""
+	run_clientside = false
+	yaw = ""
+	command = ""
+

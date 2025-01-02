@@ -1,133 +1,133 @@
-import DefaultConfig from "../Amaterasu/core/DefaultConfig"
-import Settings from "../Amaterasu/core/Settings"
+import {@ButtonProperty, @CheckboxProperty, @ColorProperty, @PercentSliderProperty, @SelectorProperty, @SwitchProperty, @TextProperty, @Vigilant, @SliderProperty, @NumberProperty, @DecimalSliderProperty} from '../Vigilance/index';
 
-const config = new DefaultConfig("AutoRoutes", "NonexistentConfig.json")
+@Vigilant("AutoRoutes")
+class Settings {
+    constructor() {
+        this.initialize(this);
+        this.setCategoryDescription("Route", "x.");
+    }
 
-
-config
-    .addSwitch({
-        configName: "center",
-        title: "Center",
+    @SwitchProperty({
+        name: "Center",
         description: "Puts you right in the center of where the NODE is located. Note that this also modifies your Y level, so it may not work and just lagback if your node is extremely tall. Useful to align yourself if you aren't starting in the middle of the block.",
-        category: "Node"
+        category: "Route"
     })
-    .addSwitch({
-        configName: "stop",
-        title: "Stop",
+    center = false
+
+    @SwitchProperty({
+        name: "Stop",
         description: "Stops all movement when you trigger this node.",
-        category: "Node"
+        category: "Route"
     })
-    .addTextInput({
-        configName: "radius",
-        title: "Radius",
-        description: "Radius of the node in blocks.",
-        category: "Node",
-        value: "0.7"
+    stop = false
+
+    @DecimalSliderProperty({
+        name: "Radius",
+        description: "Radius of the node.",
+        category: "Route",
+        minF: 0.15,
+        maxF: 2,
+        decimalPlaces: 2
     })
-    .addTextInput({
-        configName: "height",
-        title: "Height",
-        description: "Height of the node in blocks.",
-        category: "Node",
-        value: "0.1"
-    })
-    .addDropDown({
-        configName: "type",
-        title: "Node type",
+    radius = 0.5
+
+    @SelectorProperty({
+        name: "Node type",
         description: "Select an option",
-        category: "Node",
-        options: ["Look", "Etherwarp", "Use Item", "Walk", "Superboom", "Pearl VClip", "Command"],
-        value: 0
+        category: "Route",
+        options: ["Look", "Etherwarp", "Use Item", "Walk", "Superboom", "Pearl VClip", "Command"]
     })
-    .addTextInput({
-        configName: "itemName",
-        title: "Item name to use",
+    type = 0
+
+
+    @TextProperty({
+        name: "Item name to use",
         description: "",
-        category: "Node",
-        shouldShow: data => data.type === 2
+        category: "Route",
+        subcategory: "Rotation"
     })
-    .addSwitch({
-        configName: "stopSneaking",
-        title: "Stop sneaking",
+    itemName = ""
+
+    @SwitchProperty({
+        name: "Stop sneaking",
         description: "Makes you stop sneaking before executing the node.",
-        category: "Node",
-        shouldShow: data => data.type === 2
+        category: "Route"
     })
-    .addDropDown({
-        configName: "etherCoordMode",
-        title: "Etherwarp Coordinate Mode",
+    stopSneaking = false
+
+    @SelectorProperty({
+        name: "Etherwarp Coordinate Mode",
         description: "RayTrace Scanning may be required for some TPs from extremely certain spots, it is very bad generally though. I recommend trying Calculate Yaw/Pitch and Yaw/Pitch before trying it.",
-        category: "Node",
-        options: ["RayTrace Scanning", "Yaw/Pitch", "Calculate Yaw/Pitch"],
-        value: 0,
-        shouldShow: data => data.type === 1
+        category: "Route",
+        options: ["RayTrace Scanning", "Yaw/Pitch", "Calculate Yaw/Pitch"]
     })
-    .addTextInput({
-        configName: "yaw",
-        title: "Yaw",
+    etherCoordMode = 0
+
+    @TextProperty({
+        name: "Yaw",
         description: "Number between -180 and 180.",
-        category: "Node",
-        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4
+        category: "Route"
     })
-    .addTextInput({
-        configName: "pitch",
-        title: "Pitch",
+    yaw = ""
+
+    @TextProperty({
+        name: "Pitch",
         description: "Number between -90 and 90.",
-        category: "Node",
-        shouldShow: data => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4
+        category: "Route"
     })
-    .addTextInput({
-        configName: "etherBlock",
-        title: "Etherwarp Block Coordinates",
+    pitch = ""
+
+    @TextProperty({
+        name: "Etherwarp Block Coordinates",
         description: "Seperated by commas.",
-        category: "Node",
-        shouldShow: data => data.type === 1 && (data.etherCoordMode === 0 || data.etherCoordMode === 2)
+        category: "Route"
     })
-    .addSwitch({
-        configName: "awaitSecret",
-        title: "Await secret pickup, skull or lever click",
+    etherBlock = "";
+
+    @SwitchProperty({
+        name: "Await secret pickup, skull or lever click",
         description: "",
-        category: "Node",
-        shouldShow: data => !data.awaitBatSpawn || data.type !== 2
+        category: "Route"
     })
-    .addSwitch({
-        configName: "awaitBatSpawn",
-        title: "Await bat spawning",
+    awaitSecret = false
+
+    @SwitchProperty({
+        name: "Await bat spawning",
         description: "Waits for a bat to spawn within 15 blocks of you. Used so you can kill it after it spawns or something idk",
-        category: "Node",
-        shouldShow: data => !data.awaitSecret && data.type === 2
+        category: "Route"
     })
-    .addTextInput({
-        configName: "pearlClipDistance",
-        title: "Pearl VClip Distance",
+    awaitBatSpawn = false
+
+    @TextProperty({
+        name: "Pearl VClip Distance",
         description: "How many blocks to clip down. If this is set to 0 it will attempt to scan for an air opening below you, however note this may be inaccurate or put you in the fucking void",
-        category: "Node",
-        shouldShow: data => data.type === 5
+        category: "Route"
     })
-    .addTextInput({
-        configName: "commandArgs",
-        title: "Command",
+    pearlClipDistance = ""
+
+    @TextProperty({
+        name: "Command",
         description: "Make sure to omit the first backslash.",
-        category: "Node",
-        shouldShow: data => data.type === 6
+        category: "Route"
     })
-    .addSwitch({
-        configName: "runClientSide",
-        title: "Run Clientside",
+    commandArgs = ""
+
+    @SwitchProperty({
+        name: "Run Clientside",
         description: "",
-        category: "Node",
-        shouldShow: data => data.type === 6
+        category: "Route"
     })
-    .addTextInput({
-        configName: "delay",
-        title: "Node Delay",
+    runClientside = false
+
+    @TextProperty({
+        name: "Node Delay",
         description: "If you are stacking multiple nodes together to perform multiple actions (e.g throwing 2 pearls), each individual node should have a delay of at least 150ms more than the last one to work properly. This only matters for nodes that use server rotations.",
-        category: "Node"
+        category: "Route"
     })
+    delay = ""
+}
 
-
-const nodeCreationGUI = new Settings("AutoRoutes", config, "ColorScheme.json")
-export default () => nodeCreationGUI.settings
+export default new Settings()
 
 export const nodeTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip", "command"]
 export const availableArgs = new Map([
