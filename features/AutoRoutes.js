@@ -246,7 +246,7 @@ const nodeActions = {
             }
             clickAt(yaw, pitch)
         }
-        if (success[0] === "SWAPPED") {
+        if (success[0] === "SWAPPED" || args.stopSneaking) {
             prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
             scheduleTask(0, clickExec)
         } else clickExec()
