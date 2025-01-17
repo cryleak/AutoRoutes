@@ -273,7 +273,7 @@ const nodeActions = {
         })
     },
     pearlclip: (args) => {
-        const [yaw, pitch] = [Player.getYaw(), 90]
+        const [yaw, pitch] = [0, 90]
         const success = swapFromName("Ender Pearl")
         if (success[0] === "CANT_FIND") return
         const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - args.pearlClipDistance
@@ -337,6 +337,8 @@ const preRotate = (nodeArgs, pos) => {
         const yawPitch = getEtherYawPitchFromArgs(nodeArgs)
         if (!yawPitch) return
         [yaw, pitch] = yawPitch
+    } else if (nodeArgs.type === "pearlclip") {
+        [yaw, pitch] = [0, 90]
     } else {
         [yaw, pitch] = [convertToRealYaw(nodeArgs.yaw), nodeArgs.pitch]
     }
@@ -375,3 +377,11 @@ register("command",(speed) => {
 setGameSpeed(parseFloat(speed))
 }).setName("set")
 */
+
+register("command", (yaw, pitch) => {
+    prepareRotate(parseFloat(yaw), parseFloat(pitch), [Player.getX(), Player.getY(), Player.getZ()], true)
+}).setName("prerotate")
+
+register("command", (yaw, pitch) => {
+    clickAt(parseFloat(yaw), parseFloat(pitch))
+}).setName("clickat")

@@ -14,9 +14,8 @@ export function chat(message) {
 /**
  * Prints in chat a debug message if debug messages are enabled.
  * @param {String} message 
- * @param {Boolean} disappear Currently does nothing
  */
-export function debugMessage(message, disappear = true) {
+export function debugMessage(message) {
     if (!Settings().debugMessages) return
     ChatLib.chat("§0[§6AutoRoutesDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }

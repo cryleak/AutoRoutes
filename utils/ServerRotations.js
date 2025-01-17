@@ -1,7 +1,11 @@
 import { debugMessage, chat, scheduleTask } from "./utils"
-import { rotate, sendAirClick, rightClick } from "../utils/RouteUtils"
+import { rotate, sendAirClick } from "../utils/RouteUtils"
 import Settings from "../config"
 import { getDistanceToCoord } from "../../BloomCore/utils/utils"
+
+const queuedPreRotates = []
+const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
+
 let lastTP = Date.now()
 let packetsPreRotating = 0
 let yaw = 0
@@ -10,31 +14,44 @@ let pitch = 0
 let clicking = false
 let rotating = false
 let preRotating = false
-const queuedPreRotates = []
 let currentPreRotatePosition = null
+let awaitingMotionUpdate = false
 
-register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Pre, (event) => {
+register("packetSent", (packet, event) => { // someone should totally teach me how to use ct asm or asm in general (im not learning that shit)
+    if (!awaitingMotionUpdate) return
+    awaitingMotionUpdate = false
     if (!rotating && !preRotating) return
 
     if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return
-    event.yaw = yaw
-    event.pitch = pitch
-    if (preRotating) debugMessage(`prerotating ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()}`)
-    else if (clicking) debugMessage(`clicked ${[event.yaw.toFixed(2), event.pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
+
+
+    const packetPos = [packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e()]
+    const onGround = packet.func_149465_i()
+
+    let newPacket
+    const packetClass = packet.class.getSimpleName()
+    if (packetClass === "C04PacketPlayerPosition" || packetClass === "C06PacketPlayerPosLook") newPacket = new C03PacketPlayer.C06PacketPlayerPosLook(...packetPos, yaw, pitch, onGround)
+    else newPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, onGround)
+
+    ChatLib.chat(`${newPacket ? newPacket.class.getSimpleName() : "null"} ${newPacket?.func_149462_g() ?? "null"} ${newPacket?.func_149470_h() ?? "null"}`)
+    cancel(event)
+    Client.sendPacket(newPacket)
+
+    if (preRotating) debugMessage(`prerotating ${[yaw.toFixed(2), pitch.toFixed(2)].toString()}`)
+    else if (clicking) debugMessage(`clicked ${[yaw.toFixed(2), pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
     if (preRotating) packetsPreRotating++
     if (Settings().rotateOnServerRotate) Client.scheduleTask(0, () => rotate(yaw, pitch))
 
     if (currentPreRotatePosition && getDistanceToCoord(...currentPreRotatePosition, false) > 2.5) stopRotating() // Stop prerotating if you move away from where the prerotate started
 
-    if (!queuedPreRotates.length) return
-    for (let i = queuedPreRotates.length - 1; i >= 0; i--) {
-        let queuedPreRotate = queuedPreRotates[i]
-        if (getDistanceToCoord(...queuedPreRotate.pos, false) > 2.5) queuedPreRotates.splice(i, 1)
+    if (queuedPreRotates.length) {
+        for (let i = queuedPreRotates.length - 1; i >= 0; i--) {
+            let queuedPreRotate = queuedPreRotates[i]
+            if (getDistanceToCoord(...queuedPreRotate.pos, false) > 2.5) queuedPreRotates.splice(i, 1)
+        }
     }
-})
 
-register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Post, () => {
-    if (!clicking || !rotating) return
+    if (!clicking) return
 
     rotating = false
     clicking = false
@@ -44,6 +61,11 @@ register(Java.type("nukedenmark.events.impl.MotionUpdateEvent").Post, () => {
     const queuedPreRotate = queuedPreRotates.shift()
     currentPreRotatePosition = [...queuedPreRotate.pos]
     queuedPreRotate.exec()
+}).setFilteredClass(C03PacketPlayer)
+
+register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => { // Only respond to C03s that were sent from a motion update event or osmething idk
+    if (event.entity !== Player.getPlayer()) return
+    awaitingMotionUpdate = true
 })
 
 register("renderEntity", (entity) => {
@@ -56,8 +78,8 @@ register("renderEntity", (entity) => {
 
 export function clickAt(y, p) {
     if (!y && y !== 0 || !p && p !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${y} pitch = ${p}`)
-    yaw = y
-    pitch = p
+    yaw = parseFloat(y) // why is this not already a number what
+    pitch = parseFloat(p)
 
     if (preRotating) debugMessage(`Prerotated for ${packetsPreRotating} packets.`)
 
@@ -74,17 +96,14 @@ export function clickAt(y, p) {
 export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
     if (!y && y !== 0 || !p && p !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${y} pitch = ${p}`)
     const exec = () => {
-        yaw = y
-        pitch = p
+        if (yaw !== y && pitch !== p) packetsPreRotating = 0
+        yaw = parseFloat(y)
+        pitch = parseFloat(p)
         preRotating = true
         renderYaw = yaw
-        packetsPreRotating = 0
     }
     if (!preRotating && !clicking && !rotating || cancelAllPreRotates) {
-        if (cancelAllPreRotates) {
-            while (queuedPreRotates.length) queuedPreRotates.pop()
-            if (yaw === y && pitch === p) return
-        }
+        if (cancelAllPreRotates) while (queuedPreRotates.length) queuedPreRotates.pop()
         currentPreRotatePosition = [...pos]
         exec()
     } else {
@@ -94,8 +113,6 @@ export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
             if (index !== -1) queuedPreRotates.splice(index, 1)
         })
     }
-    // exec()
-
 }
 
 export function stopRotating() {
@@ -115,13 +132,14 @@ const airClick = () => {
             if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport() // Makes ZPH allow any type of teleport regardless of if you have it enabled or not on the next teleport
         } catch (e) {
             console.log(e)
-            chat("Error, check console or something")
+            chat("Error, check console. You should probably just disable Zero Ping TP if you can't use it.")
         }
     })
 }
 
 
 register("worldUnload", stopRotating)
+
 /*
 register("packetSent", (packet, event) => {
     if (!packet.func_149466_j()) return
