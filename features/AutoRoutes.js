@@ -276,7 +276,7 @@ const nodeActions = {
         const [yaw, pitch] = [0, 90]
         const success = swapFromName("Ender Pearl")
         if (success[0] === "CANT_FIND") return
-        const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - args.pearlClipDistance
+        const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - Math.abs(args.pearlClipDistance)
         if (!clipPos) return chat("Couldn't resolve clip distance.")
         const clickExec = () => {
             if (success[1] !== Player.getHeldItemIndex()) {
