@@ -220,7 +220,7 @@ const nodeActions = {
                     stopRotating()
                     return chat("You are somehow holding the wrong item...")
                 }
-                clickAt(rotation[0], rotation[1], true)
+                clickAt(rotation[0], rotation[1])
             }
             if (success[0] === "SWAPPED") {
                 prepareRotate(rotation[0], rotation[1], [Player.getX(), Player.getY(), Player.getZ()], true) // prerotate 1 tick

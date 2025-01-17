@@ -54,6 +54,14 @@ config
         subcategory: "AutoRoutes",
         value: false
     })
+    .addSwitch({
+        configName: "autoTimerBalance",
+        title: "Automatically cancel movemnt packets while standing still",
+        description: "Cancels movement packets that do nothing in order to give negative timer balance and reduce the risk of getting banned significantly. May interfere with some mods but I don't know which, if any?",
+        category: "Main",
+        subcategory: "AutoRoutes",
+        value: false
+    })
     .addDropDown({
         configName: "nodeColorPreset",
         title: "Node Color Preset",

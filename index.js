@@ -8,6 +8,7 @@ Bomb Denmark
 import Settings from "./config"
 import "./features/AutoRoutes"
 import "./features/ZeroPingEtherwarp"
+import "./features/AutoTimerBalance"
 
 
 register("command", () => {

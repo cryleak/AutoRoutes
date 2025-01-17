@@ -129,10 +129,11 @@ const airClick = () => {
     clicking = false
     sendAirClick(() => {
         try {
-            if (Settings().zeroPingHype) global.cryleak.autoroutes.performAnyTeleport() // Makes ZPH allow any type of teleport regardless of if you have it enabled or not on the next teleport
+            // Worlds longest line of code world record or something
+            if (Settings().zeroPingHype && (["ASPECT_OF_THE_VOID", "ASPECT_OF_THE_END", "NECRON_BLADE", "HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"].includes(Player?.getHeldItem()?.getNBT()?.toObject()?.tag?.ExtraAttributes?.id) || Settings().singleplayer && (Player?.getHeldItem()?.getID() === 277 || Player?.getHeldItem()?.getID() === 267))) global.cryleak.autoroutes.performAnyTeleport()// Makes ZPH allow any type of teleport regardless of if you have it enabled or not on the next teleport
         } catch (e) {
             console.log(e)
-            chat("Error, check console. You should probably just disable Zero Ping TP if you can't use it.")
+            chat("Error, check console idk its probably fine")
         }
     })
 }
