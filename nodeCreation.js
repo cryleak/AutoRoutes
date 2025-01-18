@@ -104,7 +104,7 @@ class Settings {
     etherBlock = "";
 
     @SwitchProperty({
-        name: "Await secret pickup, skull or lever click",
+        name: "Await secret pickup, skull, lever click or bat death",
         description: "",
         category: "Route"
     })
