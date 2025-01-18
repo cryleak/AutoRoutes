@@ -33,7 +33,7 @@ register("packetSent", (packet, event) => { // someone should totally teach me h
     if (packetClass === "C04PacketPlayerPosition" || packetClass === "C06PacketPlayerPosLook") newPacket = new C03PacketPlayer.C06PacketPlayerPosLook(...packetPos, yaw, pitch, onGround)
     else newPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, onGround)
 
-    ChatLib.chat(`${newPacket ? newPacket.class.getSimpleName() : "null"} ${newPacket?.func_149462_g() ?? "null"} ${newPacket?.func_149470_h() ?? "null"}`)
+    // ChatLib.chat(`${newPacket ? newPacket.class.getSimpleName() : "null"} ${newPacket?.func_149462_g() ?? "null"} ${newPacket?.func_149470_h() ?? "null"}`)
     cancel(event)
     Client.sendPacket(newPacket)
 

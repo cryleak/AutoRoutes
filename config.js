@@ -47,16 +47,8 @@ config
         value: true
     })
     .addSwitch({
-        configName: "zeroPingHype",
-        title: "Zero Ping TP On All Items",
-        description: "Uses ZPH to use zero ping teleport for Instant Transmission and Wither Impact on node-triggered teleports. Requires a modified version of ZPH to work. Make sure the Yaw/Pitch combination in your Use Item node yields an accurate teleport prediction!",
-        category: "Main",
-        subcategory: "AutoRoutes",
-        value: false
-    })
-    .addSwitch({
         configName: "autoTimerBalance",
-        title: "Automatically cancel movemnt packets while standing still",
+        title: "Automatically cancel movement packets while standing still",
         description: "Cancels movement packets that do nothing in order to give negative timer balance and reduce the risk of getting banned significantly. May interfere with some mods but I don't know which, if any?",
         category: "Main",
         subcategory: "AutoRoutes",
@@ -135,6 +127,13 @@ config
         shouldShow: data => data.nodeColorPreset === 3
     })
     .addSwitch({
+        configName: "zeroPingHype",
+        title: "Zero Ping TP On All Items",
+        description: "Uses ZPH to use zero ping teleport for Instant Transmission and Wither Impact on node-triggered teleports. You must toggle Zero Ping TP in AutoRoutes to make it work. Disable other zpews if you have any.",
+        category: "Zero Ping TP",
+        value: false
+    })
+    .addSwitch({
         configName: "zpewEnabled",
         title: "Toggle",
         description: "",
@@ -150,7 +149,7 @@ config
     .addSlider({
         configName: "maxFails",
         title: "Max fails in last 20 seconds",
-        description: "Note that you will probably get banned regardless of if you fail 1000 times in 20 minutes or 1 minute (on the same server) due to how timer balance works. You can use BlinkRoutes timer balance if you want to not get banned or something idk but it shouldn't fail anyways",
+        description: "Note that you will probably get banned regardless of if you fail 1000 times in 20 minutes or 1 minute (on the same server) due to how timer balance works. You can try using the option to cancel movement packets in this mod.",
         category: "Zero Ping TP",
         options: [3, 20],
         value: 3,
