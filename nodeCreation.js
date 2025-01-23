@@ -11,7 +11,7 @@ class Settings {
         this.addDependency("Yaw", "show yaw")
         this.addDependency("Pitch", "show pitch")
         this.addDependency("Etherwarp Block Coordinates", "show etherBlock")
-        this.addDependency("Await secret pickup, skull or lever click", "show awaitSecret")
+        this.addDependency("Await secret pickup, skull, lever click or bat death", "show awaitSecret")
         this.addDependency("Await bat spawning", "show awaitBatSpawn")
         this.addDependency("Pearl VClip Distance", "show pearlClipDistance")
         this.addDependency("Command", "show commandArgs")
