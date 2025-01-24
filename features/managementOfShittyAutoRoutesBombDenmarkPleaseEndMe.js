@@ -17,7 +17,6 @@ const dependencyChecks = { // sigma
     showAwaitBatSpawn: (data) => !data.awaitSecret && data.type === 2,
     showPearlClipDistance: (data) => data.type === 5,
     showCommandArgs: (data) => data.type === 6,
-    showRunClientSide: (data) => data.type === 6
 }
 
 let nodeCoords = null
@@ -61,7 +60,6 @@ register("command", () => {
     nodeCreation.etherBlock = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0"
     nodeCreation.awaitSecret = false
     nodeCreation.awaitBatSpawn = false
-    nodeCreation.runClientside = false
     nodeCreation.commandArgs = ""
     nodeCreation.delay = "0"
     nodeCreation.pearlClipDistance = "20"
@@ -70,7 +68,73 @@ register("command", () => {
 
     nodeCreation.openGUI()
     Client.scheduleTask(1, () => editing = true)
+}).setName("createnodegui")
+
+register("command", (...args) => { // this is terrible
+    if (!args.length || !args[0]) return chat([
+        `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
+        `§0-§r List of node types: look, etherwarp, useItem, walk, superboom, pearlclip, command`,
+        `§0-§r For pearlclip you need to specify the clip distance as the argument after type.`,
+        `§0-§r Etherwarp always uses yaw pitch mode when you make it using commands.`,
+        `§0-§r List of args you can use:`,
+        `§0-§r §rdelay §0<§fnumber§0>`,
+        `§0-§r awaitsecret`,
+        `§0-§r stop`,
+        `§0-§r center`,
+        `§0-§r radius §0<§rnumber§0>`,
+        `§0-§r height §0<§rnumber§0>`
+    ].join("\n"))
+
+    const type = args.shift()
+    const argsObject = {
+        type: nodeTypes.indexOf(type),
+        etherCoordMode: 1,
+        etherBlock: rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
+        yaw: Player.getYaw().toFixed(3),
+        pitch: Player.getPitch().toFixed(3),
+        radius: 0.5,
+        height: 0.1,
+        awaitSecret: false,
+        awaitBatSpawn: false,
+        delay: 0,
+        stop: false,
+        center: false,
+        pearlClipDistance: 0
+    }
+
+    if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
+    else if (type === "useitem") return chat("you cant make this node using commands cause i cant be bothered to figure out how to fit the item name inside of this shit and i dont care")
+    else if (type === "command") return chat("you cant make this node using commands cause i cant be bothered to figure out how to fit the command args inside of this shit and i dont care")
+
+    for (let i = 0; i < args.length; i++) {
+        switch (args[i].toLowerCase()) {
+            case "delay":
+                argsObject.delay = parseInt(args[i + 1])
+                break
+            case "awaitsecret":
+                argsObject.awaitSecret = true
+                break
+            case "stop":
+                argsObject.stop = true
+                break
+            case "center":
+                argsObject.center = true
+                break
+            case "radius":
+                argsObject.radius = parseInt(args[i + 1])
+                break
+            case "height":
+                argsObject.height = parseInt(args[i + 1])
+                break
+            default:
+                break
+        }
+    }
+
+    editingNodeIndex = null
+    addNode(argsObject, playerCoords().camera)
 }).setName("createnode")
+
 register("command", (...args) => {
     const roomNodes = data.nodes[getRoomName()]
     if (!roomNodes || !roomNodes.length) return chat("No nodes found for this room!")
@@ -107,7 +171,6 @@ register("command", (...args) => {
     nodeCreation.etherCoordMode = node.etherCoordMode ?? 0
     nodeCreation.etherBlock = etherBlock?.toString() ?? "0,0,0"
     nodeCreation.awaitSecret = node.awaitSecret ?? false
-    nodeCreation.runClientSide = node.runClientSide ?? true
     nodeCreation.commandArgs = node.commandArgs ?? ""
     nodeCreation.delay = node.delay.toString()
     nodeCreation.pearlClipDistance = node.pearlClipDistance ?? "20"
@@ -142,7 +205,7 @@ function addNode(args, pos) {
     let yOffset = pos[1] - Math.floor(pos[1]) // Allow for decimals on the Y Axis.
     pos = pos.map(coord => coord = Math.floor(parseFloat(coord)))
     const nodeType = nodeTypes[parseInt(args.type)]
-    if (!nodeType) return
+    if (!nodeType) return chat("what the fuck is your nodetype")
     const roomName = getRoomName()
     if (!roomName) return chat("No room detected!")
     if (!data.nodes[roomName]) data.nodes[roomName] = []
@@ -204,7 +267,6 @@ nodeCreation.yaw = 0
 nodeCreation.pitch = 0
 nodeCreation.etherBlock = "0,0,0"
 nodeCreation.awaitSecret = false
-nodeCreation.runClientSide = true
 nodeCreation.commandArgs = ""
 nodeCreation.delay = 0
 nodeCreation.pearlClipDistance = 20

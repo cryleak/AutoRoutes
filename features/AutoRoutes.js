@@ -63,7 +63,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             }
         }
         catch (e) {
-            chat(`send this to me: ${extraNodeData?.toString() ?? "null"}`)
+            chat(`send me your config also send this message extraNodeData.toString() ${extraNodeData?.toString() ?? "null"}`)
             return scheduleTask(5, updateRoutes)
         }
     }
@@ -81,17 +81,13 @@ const actionRegister = register("tick", () => {
 const performActions = () => {
     let playerPosition = playerCoords().player
 
-    // for (let i = 0; i < activeNodes.length; i++) {
     activeNodesCoords?.forEach((extraNodeData, i) => {
         try {
             let node = activeNodes[i]
-            // let extraNodeData = activeNodesCoords[i]
             let nodePos = extraNodeData.position
             let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
             let yDistance = playerPosition[1] - nodePos[1]
             if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-                // if (Date.now() - extraNodeData.lastUse < 1000) continue
-                // if (extraNodeData.triggered) continue
                 if (Date.now() - extraNodeData.lastUse < 1000) return
                 if (extraNodeData.triggered) return
                 extraNodeData.triggered = true
@@ -145,10 +141,9 @@ const performActions = () => {
 
                 } else exec()
             } else if (extraNodeData.triggered) extraNodeData.triggered = false
-            // }
         } catch (e) {
-            chat("error check console or something")
             console.log(e)
+            chat("error check console or something idk")
             return scheduleTask(5, updateRoutes)
         }
     })
@@ -164,6 +159,7 @@ register("tick", () => {
 })
 
 const updateRoutes = () => {
+    // load all rooms at the same time cause funny
     /*
     const rooms = []
     Object.keys(data.nodes).forEach(room => {
@@ -197,7 +193,7 @@ const updateRoutes = () => {
             }
             activeNodesCoords.push(nodeToPush)
         } catch (e) {
-            chat(`send this to me: ${node?.toString() ?? "null"}`)
+            chat(`send me your config also send me this message node.toString() ${node?.toString() ?? "null"}`)
             console.log(e)
             return scheduleTask(5, updateRoutes) // try again, surely this fixes it
         }
@@ -301,7 +297,7 @@ const nodeActions = {
     },
     command: (args) => {
         try {
-            ChatLib.command(args.commandArgs, args.runClientSide)
+            ChatLib.command(args.commandArgs, true)
         } catch (e) {
             console.log(e)
             chat("Error trying to execute command!")
@@ -462,7 +458,6 @@ function convertFile(file) {
             case "command":
                 convertedNode.type = "command"
                 convertedNode.commandArgs = node.command
-                convertedNode.runClientSide = true
                 break
             case "hype":
                 convertedNode.type = "useItem"

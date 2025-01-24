@@ -15,7 +15,6 @@ class Settings {
         this.addDependency("Await bat spawning", "show awaitBatSpawn")
         this.addDependency("Pearl VClip Distance", "show pearlClipDistance")
         this.addDependency("Command", "show commandArgs")
-        this.addDependency("Run Clientside", "show runClientSide")
 
     }
 
@@ -131,13 +130,6 @@ class Settings {
     })
     commandArgs = ""
 
-    @SwitchProperty({
-        name: "Run Clientside",
-        description: "",
-        category: "Route"
-    })
-    runClientside = false
-
     @TextProperty({
         name: "Node Delay",
         description: "If you are stacking multiple nodes together to perform multiple actions (e.g throwing 2 pearls), each individual node should have a delay of at least 150ms more than the last one to work properly. This only matters for nodes that use server rotations.",
@@ -207,12 +199,6 @@ class Settings {
         category: "Schizo vigilance shit ignore this"
     })
     showCommandArgs = false
-    @SwitchProperty({
-        name: "show runClientSide",
-        description: "",
-        category: "Schizo vigilance shit ignore this"
-    })
-    showRunClientSide = false
 }
 
 export default new Settings()
@@ -225,5 +211,5 @@ export const availableArgs = new Map([
     ["walk", ["yaw", "pitch"]],
     ["superboom", ["yaw", "pitch"]],
     ["pearlclip", ["pearlClipDistance"]],
-    ["command", ["commandArgs", "runClientSide"]]
+    ["command", ["commandArgs"]]
 ])

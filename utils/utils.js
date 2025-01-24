@@ -8,7 +8,7 @@ const defaultColor = "§f"
  * @param {String} message 
  */
 export function chat(message) {
-    ChatLib.chat("§0[§6AutoRoutes§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
+    ChatLib.chat("§0[§6AutoRoutes§0] " + defaultColor + message.toString().replaceAll(/(?:&r|§r)/gi, defaultColor))
 }
 
 /**
@@ -111,5 +111,5 @@ export function scheduleTask(delay, exec) {
 }
 
 register("tick", () => {
-    while (codeToExec.length) codeToExec.pop()()
+    while (codeToExec.length) codeToExec.shift()()
 }).setPriority(Priority.HIGHEST)
