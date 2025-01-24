@@ -164,6 +164,14 @@ register("tick", () => {
 })
 
 const updateRoutes = () => {
+    /*
+    const rooms = []
+    Object.keys(data.nodes).forEach(room => {
+        const nodes = data.nodes[room]
+        nodes.forEach(node => rooms.push(node))
+    })
+    roomNodes = [...rooms]
+    */
     roomNodes = data.nodes[getRoomName()]
     activeNodes = []
     if (!roomNodes || !roomNodes.length) {
@@ -385,3 +393,98 @@ register("command", (yaw, pitch) => {
 register("command", (yaw, pitch) => {
     clickAt(parseFloat(yaw), parseFloat(pitch))
 }).setName("clickat")
+
+
+
+
+
+// i was bored idk
+register("command", (...args) => {
+    const fileName = args.join(" ")
+
+    if (!FileLib.exists("AutoRoutes", fileName + ".json")) return chat("File doesn't exist!")
+
+    const file = FileLib.read("AutoRoutes", fileName + ".json")
+    const convertedFile = convertFile(file)
+
+    FileLib.write("./config/ChatTriggers/modules/AutoRoutes/converted " + fileName + ".json", JSON.stringify(convertedFile))
+}).setName("convertcgafile")
+
+function convertFile(file) {
+    const original = JSON.parse(file)
+    let newObj = { nodes: {} }
+
+    original.forEach(node => {
+        const type = node.type
+        const nodeArgs = node.arguments
+
+        let convertedNode = {}
+        convertedNode.position = Object.values(node.location)
+        convertedNode.yOffset = 0
+        convertedNode.yaw = node.yaw ?? null
+        convertedNode.pitch = node.pitch ?? null
+        convertedNode.height = node.height
+        convertedNode.radius = node.width / 2
+        convertedNode.awaitSecret = nodeArgs.includes("await")
+        convertedNode.center = false
+        convertedNode.stop = nodeArgs.includes("stop")
+        switch (type) {
+            case "pearlclip":
+                convertedNode.type = "pearlclip"
+
+                convertedNode.pearlClipDistance = node.depth
+                break
+            case "walk":
+                convertedNode.type = "walk"
+                if (!nodeArgs.includes("look")) {
+                    convertedNode.yaw = null
+                    convertedNode.pitch = null
+                }
+                break
+            case "boom":
+                convertedNode.type = "superboom"
+                break
+            case "stop":
+                convertedNode.type = "look"
+                convertedNode.yaw = null
+                convertedNode.pitch = null
+                convertedNode.stop = true
+                break
+            case "align":
+                convertedNode.type = "look"
+                convertedNode.yaw = null
+                convertedNode.pitch = null
+                convertedNode.center = true
+                break
+            case "look":
+                convertedNode.type = "look"
+                break
+            case "command":
+                convertedNode.type = "command"
+                convertedNode.commandArgs = node.command
+                convertedNode.runClientSide = true
+                break
+            case "hype":
+                convertedNode.type = "useItem"
+                convertedNode.itemName = "Hyperion"
+                break
+            case "pearl":
+                convertedNode.type = "useItem"
+                convertedNode.itemName = "Ender Pearl"
+                break
+            case "aotv":
+                convertedNode.type = "useItem"
+                convertedNode.itemName = "Aspect of the Void"
+                break
+            case "warp":
+                convertedNode.type = "etherwarp"
+                convertedNode.etherBlock = [0, 0, 0]
+                convertedNode.etherCoordMode = 1
+                break
+        }
+        if (!newObj.nodes[node.room]) newObj.nodes[node.room] = []
+        newObj.nodes[node.room].push(convertedNode)
+    })
+
+    return newObj
+}
