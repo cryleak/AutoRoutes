@@ -18,12 +18,21 @@ let moveKeyCooldown = Date.now()
 let blockUnsneakCooldown = Date.now()
 let autoRoutesEnabled = false
 
-new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
-    autoRoutesEnabled = !autoRoutesEnabled
+const toggleAutoRoutes = (state = !autoRoutesEnabled) => {
+    if (state !== autoRoutesEnabled) {
+        ChatLib.clearChat(1337)
+        new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${state ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
+    }
+    autoRoutesEnabled = state
     stopRotating()
-    ChatLib.clearChat(1337)
-    new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
-})
+}
+
+new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(toggleAutoRoutes)
+register("command", (state) => {
+    if (!state) toggleAutoRoutes()
+    else toggleAutoRoutes(state === "true")
+}).setName("toggleautoroutes")
+
 
 register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
     const settings = Settings()

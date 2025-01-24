@@ -1,3 +1,4 @@
+import Settings from "../config"
 import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
 import { movementKeys } from "../utils/RouteUtils"
 import { scheduleTask } from "../utils/utils"
@@ -34,6 +35,8 @@ register("packetSent", (packet, event) => { // Block click listener
     const [x, y, z] = [position.x, position.y, position.z]
     const blockName = World.getBlockAt(x, y, z).type.getRegistryName()
     if (!["minecraft:chest", "minecraft:trapped_chest", "minecraft:skull", "minecraft:lever"].includes(blockName)) return
+    if (!listeners.length) return
+    if (blockName === "minecraft:trapped_chest" && Settings().disableOnMimic) ChatLib.command("toggleautoroutes false", true)
     for (let i = listeners.length - 1; i >= 0; i--) {
         let listener = listeners[i]
         if (listener.awaitingBat) continue
