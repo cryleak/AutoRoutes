@@ -23,6 +23,14 @@ config
         value: false
     })
     .addSwitch({
+        configName: "disableOnMimic",
+        title: "Disable AutoRoutes on trapped chest click",
+        description: "Automatically disables AutoRoutes when you click a trapped chest. This is because a trapped chest is probably a mimic chest.",
+        category: "Main",
+        subcategory: "AutoRoutes",
+        value: false
+    })
+    .addSwitch({
         configName: "rotateOnServerRotate",
         title: "Rotate",
         description: "Rotates on nodes that use Server Rotations so you can see where it is looking visually. This is only a visual change.",

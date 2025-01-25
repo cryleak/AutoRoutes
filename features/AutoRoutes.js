@@ -18,12 +18,21 @@ let moveKeyCooldown = Date.now()
 let blockUnsneakCooldown = Date.now()
 let autoRoutesEnabled = false
 
-new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
-    autoRoutesEnabled = !autoRoutesEnabled
+const toggleAutoRoutes = (state = !autoRoutesEnabled) => {
+    if (state !== autoRoutesEnabled) {
+        ChatLib.clearChat(1337)
+        new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${state ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
+    }
+    autoRoutesEnabled = state
     stopRotating()
-    ChatLib.clearChat(1337)
-    new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${autoRoutesEnabled ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
-})
+}
+
+new Keybind("Toggle AutoRoutes", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(toggleAutoRoutes)
+register("command", (state) => {
+    if (!state) toggleAutoRoutes()
+    else toggleAutoRoutes(state === "true")
+}).setName("toggleautoroutes")
+
 
 register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
     const settings = Settings()
@@ -63,7 +72,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             }
         }
         catch (e) {
-            chat(`send this to me: ${extraNodeData?.toString() ?? "null"}`)
+            chat(`send me your config also send this message extraNodeData.toString() ${extraNodeData?.toString() ?? "null"}`)
             return scheduleTask(5, updateRoutes)
         }
     }
@@ -81,17 +90,13 @@ const actionRegister = register("tick", () => {
 const performActions = () => {
     let playerPosition = playerCoords().player
 
-    // for (let i = 0; i < activeNodes.length; i++) {
     activeNodesCoords?.forEach((extraNodeData, i) => {
         try {
             let node = activeNodes[i]
-            // let extraNodeData = activeNodesCoords[i]
             let nodePos = extraNodeData.position
             let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
             let yDistance = playerPosition[1] - nodePos[1]
             if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-                // if (Date.now() - extraNodeData.lastUse < 1000) continue
-                // if (extraNodeData.triggered) continue
                 if (Date.now() - extraNodeData.lastUse < 1000) return
                 if (extraNodeData.triggered) return
                 extraNodeData.triggered = true
@@ -145,10 +150,9 @@ const performActions = () => {
 
                 } else exec()
             } else if (extraNodeData.triggered) extraNodeData.triggered = false
-            // }
         } catch (e) {
-            chat("error check console or something")
             console.log(e)
+            chat("error check console or something idk")
             return scheduleTask(5, updateRoutes)
         }
     })
@@ -164,6 +168,15 @@ register("tick", () => {
 })
 
 const updateRoutes = () => {
+    // load all rooms at the same time cause funny
+    /*
+    const rooms = []
+    Object.keys(data.nodes).forEach(room => {
+        const nodes = data.nodes[room]
+        nodes.forEach(node => rooms.push(node))
+    })
+    roomNodes = [...rooms]
+    */
     roomNodes = data.nodes[getRoomName()]
     activeNodes = []
     if (!roomNodes || !roomNodes.length) {
@@ -189,7 +202,7 @@ const updateRoutes = () => {
             }
             activeNodesCoords.push(nodeToPush)
         } catch (e) {
-            chat(`send this to me: ${node?.toString() ?? "null"}`)
+            chat(`send me your config also send me this message node.toString() ${node?.toString() ?? "null"}`)
             console.log(e)
             return scheduleTask(5, updateRoutes) // try again, surely this fixes it
         }
@@ -293,7 +306,7 @@ const nodeActions = {
     },
     command: (args) => {
         try {
-            ChatLib.command(args.commandArgs, args.runClientSide)
+            ChatLib.command(args.commandArgs, true)
         } catch (e) {
             console.log(e)
             chat("Error trying to execute command!")
@@ -385,3 +398,97 @@ register("command", (yaw, pitch) => {
 register("command", (yaw, pitch) => {
     clickAt(parseFloat(yaw), parseFloat(pitch))
 }).setName("clickat")
+
+
+
+
+
+// i was bored idk
+register("command", (...args) => {
+    const fileName = args.join(" ")
+
+    if (!FileLib.exists("AutoRoutes", fileName + ".json")) return chat("File doesn't exist!")
+
+    const file = FileLib.read("AutoRoutes", fileName + ".json")
+    const convertedFile = convertFile(file)
+
+    FileLib.write("./config/ChatTriggers/modules/AutoRoutes/converted " + fileName + ".json", JSON.stringify(convertedFile))
+}).setName("convertcgafile")
+
+function convertFile(file) {
+    const original = JSON.parse(file)
+    let newObj = { nodes: {} }
+
+    original.forEach(node => {
+        const type = node.type
+        const nodeArgs = node.arguments
+
+        let convertedNode = {}
+        convertedNode.position = Object.values(node.location)
+        convertedNode.yOffset = 0
+        convertedNode.yaw = node.yaw ?? null
+        convertedNode.pitch = node.pitch ?? null
+        convertedNode.height = node.height
+        convertedNode.radius = node.width / 2
+        convertedNode.awaitSecret = nodeArgs.includes("await")
+        convertedNode.center = false
+        convertedNode.stop = nodeArgs.includes("stop")
+        switch (type) {
+            case "pearlclip":
+                convertedNode.type = "pearlclip"
+
+                convertedNode.pearlClipDistance = node.depth
+                break
+            case "walk":
+                convertedNode.type = "walk"
+                if (!nodeArgs.includes("look")) {
+                    convertedNode.yaw = null
+                    convertedNode.pitch = null
+                }
+                break
+            case "boom":
+                convertedNode.type = "superboom"
+                break
+            case "stop":
+                convertedNode.type = "look"
+                convertedNode.yaw = null
+                convertedNode.pitch = null
+                convertedNode.stop = true
+                break
+            case "align":
+                convertedNode.type = "look"
+                convertedNode.yaw = null
+                convertedNode.pitch = null
+                convertedNode.center = true
+                break
+            case "look":
+                convertedNode.type = "look"
+                break
+            case "command":
+                convertedNode.type = "command"
+                convertedNode.commandArgs = node.command
+                break
+            case "hype":
+                convertedNode.type = "useItem"
+                convertedNode.itemName = "Hyperion"
+                break
+            case "pearl":
+                convertedNode.type = "useItem"
+                convertedNode.itemName = "Ender Pearl"
+                break
+            case "aotv":
+                convertedNode.type = "useItem"
+                convertedNode.itemName = "Aspect of the Void"
+                break
+            case "warp":
+                convertedNode.type = "etherwarp"
+                convertedNode.etherBlock = [0, 0, 0]
+                convertedNode.etherCoordMode = 1
+                break
+        }
+        if (!newObj.nodes[node.room]) newObj.nodes[node.room] = []
+        newObj.nodes[node.room].push(convertedNode)
+    })
+
+    return newObj
+}
