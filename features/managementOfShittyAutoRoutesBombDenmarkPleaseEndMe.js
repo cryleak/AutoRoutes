@@ -68,7 +68,7 @@ register("command", () => {
 
     nodeCreation.openGUI()
     Client.scheduleTask(1, () => editing = true)
-}).setName("createnodegui").setAliases("engui")
+}).setName("createnodegui").setAliases("cngui")
 
 register("command", (...args) => { // this is terrible
     if (!args.length || !args[0]) return chat([
