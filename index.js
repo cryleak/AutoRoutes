@@ -15,29 +15,12 @@ register("command", () => {
     Settings().getConfig().openGui()
 }).setName("autoroutes")
 
-const gamemodeKeybind = new KeyBind("Gamemode Switcher", Keyboard.KEY_NONE, "AutoRoutes")
-
-register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
-    if (Server.getIP() !== "localhost") return
-    worldLoad.register()
-    if (!gamemodeKeybind.isKeyDown() || Client.isInGui() ) return
-        toggleGameMode()
+new KeyBind("Gamemode Switcher", Keyboard.KEY_NONE, "AutoRoutes").registerKeyPress(() => {
+    if (Server.getIP() !== "localhost" && Server.getIP() !== "127.0.0.1") return
+    toggleGameMode()
 })
 
-let gmSwitch = true
-
 function toggleGameMode() {
-    if (gmSwitch) {
-        ChatLib.command("gamemode s")
-        gmSwitch = false
-    } else {
-        ChatLib.command("gamemode c")
-        gmSwitch = true
-    }
+    const gamemode = Client.getMinecraft().field_71442_b.func_178889_l().toString()
+    ChatLib.command(`gamemode ${gamemode === "CREATIVE" ? "s" : "c"}`)
 }
-
-const worldLoad = register("worldLoad", () => {
-    ChatLib.command("gamemode c")
-    gmSwitch = true
-    worldLoad.unregister()
-}).unregister()
