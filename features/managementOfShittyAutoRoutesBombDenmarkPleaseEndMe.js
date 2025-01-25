@@ -68,7 +68,7 @@ register("command", () => {
 
     nodeCreation.openGUI()
     Client.scheduleTask(1, () => editing = true)
-}).setName("createnodegui")
+}).setName("createnodegui").setAliases("engui")
 
 register("command", (...args) => { // this is terrible
     if (!args.length || !args[0]) return chat([
@@ -133,7 +133,7 @@ register("command", (...args) => { // this is terrible
 
     editingNodeIndex = null
     addNode(argsObject, playerCoords().camera)
-}).setName("createnode")
+}).setName("createnode").setAliases("cn")
 
 register("command", (...args) => {
     const roomNodes = data.nodes[getRoomName()]
@@ -177,7 +177,7 @@ register("command", (...args) => {
 
     nodeCreation.openGUI()
     Client.scheduleTask(1, () => editing = true)
-}).setName("editnode")
+}).setName("editnode").setAliases("en")
 
 register("command", (index) => {
     const roomNodes = data.nodes[getRoomName()]
@@ -199,7 +199,7 @@ register("command", (index) => {
     roomNodes.splice(indexToDelete, 1)
     data.save()
     ChatLib.command("updateroutes", true)
-}).setName("removenode")
+}).setName("removenode").setAliases("rn")
 
 function addNode(args, pos) {
     let yOffset = pos[1] - Math.floor(pos[1]) // Allow for decimals on the Y Axis.
