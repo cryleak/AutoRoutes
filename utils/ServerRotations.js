@@ -35,12 +35,12 @@ register("packetSent", (packet, event) => { // someone should totally teach me h
 
     // ChatLib.chat(`${newPacket ? newPacket.class.getSimpleName() : "null"} ${newPacket?.func_149462_g() ?? "null"} ${newPacket?.func_149470_h() ?? "null"}`)
     cancel(event)
-    Client.sendPacket(newPacket)
+    if (Settings().serverRotations) Client.sendPacket(newPacket)
+    else Client.sendPacket(packet)
 
     if (preRotating) debugMessage(`prerotating ${[yaw.toFixed(2), pitch.toFixed(2)].toString()}`)
     else if (clicking) debugMessage(`clicked ${[yaw.toFixed(2), pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
     if (preRotating) packetsPreRotating++
-    if (Settings().rotateOnServerRotate) Client.scheduleTask(0, () => rotate(yaw, pitch))
 
     if (currentPreRotatePosition && getDistanceToCoord(...currentPreRotatePosition, false) > 2.5) stopRotating() // Stop prerotating if you move away from where the prerotate started
 
@@ -90,7 +90,7 @@ export function clickAt(y, p) {
     currentPreRotatePosition = null
     renderYaw = yaw
     Client.scheduleTask(0, () => renderYaw = null)
-    if (Settings().rotateOnServerRotate) rotate(yaw, pitch)
+    if (!Settings().serverRotations) rotate(yaw, pitch)
 }
 
 export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
@@ -101,6 +101,7 @@ export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
         pitch = parseFloat(p)
         preRotating = true
         renderYaw = yaw
+        if (!Settings().serverRotations) rotate(yaw, pitch)
     }
     if (!preRotating && !clicking && !rotating || cancelAllPreRotates) {
         if (cancelAllPreRotates) while (queuedPreRotates.length) queuedPreRotates.pop()

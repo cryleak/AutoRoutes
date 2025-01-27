@@ -15,6 +15,14 @@ config
         value: false
     })
     .addSwitch({
+        configName: "renderNodes",
+        title: "Render AutoRoutes",
+        description: "",
+        category: "Main",
+        subcategory: "AutoRoutes",
+        value: false
+    })
+    .addSwitch({
         configName: "displayIndex",
         title: "Display index of nodes on screen",
         description: "Helpful for deleting and editing nodes.",
@@ -31,9 +39,9 @@ config
         value: false
     })
     .addSwitch({
-        configName: "rotateOnServerRotate",
-        title: "Rotate",
-        description: "Rotates on nodes that use Server Rotations so you can see where it is looking visually. This is only a visual change.",
+        configName: "serverRotations",
+        title: "Toggle Server Rotations",
+        description: "Might ban idk",
         category: "Main",
         subcategory: "AutoRoutes",
         value: false

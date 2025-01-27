@@ -16,14 +16,13 @@ let activeNodesCoords = []
 let moveKeyListener = false
 let moveKeyCooldown = Date.now()
 let blockUnsneakCooldown = Date.now()
-let autoRoutesEnabled = false
 
-const toggleAutoRoutes = (state = !autoRoutesEnabled) => {
-    if (state !== autoRoutesEnabled) {
+const toggleAutoRoutes = (state = !Settings().autoRoutesEnabled) => {
+    if (state !== Settings().autoRoutesEnabled) {
         ChatLib.clearChat(1337)
         new Message(`§0[§6AutoRoutes§0]§r AutoRoutes ${state ? "enabled" : "disabled"}.`).setChatLineId(1337).chat()
     }
-    autoRoutesEnabled = state
+    Settings().getConfig().setConfigValue("Main", "autoRoutesEnabled", state)
     stopRotating()
 }
 
@@ -36,7 +35,7 @@ register("command", (state) => {
 
 register("renderWorld", () => { // Bro this turned into a mess im too lazy to fix it now
     const settings = Settings()
-    if (!settings.autoRoutesEnabled) return
+    if (!settings.renderNodes) return
     if (!activeNodes.length) return
     if (!World.isLoaded()) return
     for (let i = 0; i < activeNodes.length; i++) {
@@ -79,7 +78,6 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
 })
 
 const actionRegister = register("tick", () => {
-    if (!autoRoutesEnabled) return
     if (!Settings().autoRoutesEnabled) return
     if (!activeNodes.length) return
     if (!World.isLoaded()) return
@@ -106,7 +104,7 @@ const performActions = () => {
                 }
                 let exec = () => {
                     let execNode = () => {
-                        if (!autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
+                        if (!Settings().autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
                         if (node.center) {
                             debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
                             Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
@@ -161,7 +159,7 @@ const performActions = () => {
 let lastRoomName
 register("tick", () => {
     if (!World.isLoaded()) return
-    if (!Settings().autoRoutesEnabled) return
+    if (!Settings().renderNodes) return
     if (getRoomName() === lastRoomName) return
     lastRoomName = getRoomName()
     updateRoutes()
@@ -282,7 +280,7 @@ const nodeActions = {
                 return chat("You are somehow holding the wrong item...")
             }
             leftClick()
-            if (!Settings().rotateOnServerRotate) rotate(origYaw, origPitch)
+            if (!Settings().serverRotations) rotate(origYaw, origPitch)
         })
     },
     pearlclip: (args) => {
