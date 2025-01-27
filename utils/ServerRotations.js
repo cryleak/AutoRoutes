@@ -36,7 +36,10 @@ register("packetSent", (packet, event) => { // someone should totally teach me h
     // ChatLib.chat(`${newPacket ? newPacket.class.getSimpleName() : "null"} ${newPacket?.func_149462_g() ?? "null"} ${newPacket?.func_149470_h() ?? "null"}`)
     cancel(event)
     if (Settings().serverRotations) Client.sendPacket(newPacket)
-    else Client.sendPacket(packet)
+    else {
+        rotate(yaw, pitch)
+        Client.sendPacket(packet)
+    }
 
     if (preRotating) debugMessage(`prerotating ${[yaw.toFixed(2), pitch.toFixed(2)].toString()}`)
     else if (clicking) debugMessage(`clicked ${[yaw.toFixed(2), pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
