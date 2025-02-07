@@ -4,7 +4,7 @@ import {@ButtonProperty, @CheckboxProperty, @ColorProperty, @PercentSliderProper
 class Settings {
     constructor() {
         this.initialize(this);
-        this.setCategoryDescription("Route", "x.");
+        this.setCategoryDescription("Route", "Node Creation");
         this.addDependency("Item name to use", "show itemName")
         this.addDependency("Stop sneaking", "show stopSneaking")
         this.addDependency("Etherwarp Coordinate Mode", "show etherCoordMode")
@@ -17,6 +17,13 @@ class Settings {
         this.addDependency("Command", "show commandArgs")
 
     }
+
+    @SwitchProperty({
+        name: "Chained",
+        description: "Only trigger this node if another node has been executed in the last 500ms, or if you left click inside the node.",
+        category: "Route"
+    })
+    chained = false
 
     @SwitchProperty({
         name: "Center",

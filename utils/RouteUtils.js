@@ -153,26 +153,20 @@ leftClickMethod.setAccessible(true)
 
 export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), null)
 
-let yPos
-export const registerPearlClip = (pos) => {
-    if (!pos) return
-    yPos = Math.abs(pos)
+let distance
+export const registerPearlClip = (dist) => {
+    if (!dist) return
+    distance = Math.abs(dist)
     pearlclip.register()
-    scheduleTask(20, () => {
-        if (yPos !== Math.abs(pos)) return
-        pearlclip.unregister()
-        yPos = 0
-        chat("Pearlclip timed out!")
-    })
 }
 
 const pearlclip = register("packetReceived", (packet, event) => {
     Client.scheduleTask(0, () => {
         if (event?.isCancelled()) return
         pearlclip.unregister()
-        chat(`Pearlclipped ${(Player.getY() - yPos).toFixed(2)} blocks down.`)
-        Player.getPlayer().func_70107_b(Player.getX(), yPos, Player.getZ())
-        yPos = 0
+        chat(`Pearlclipped ${distance} blocks down.`)
+        Player.getPlayer().func_70107_b(...centerCoords([Player.getX(), Player.getY() - distance, Player.getZ()]))
+        distance = 0
     })
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
 
@@ -294,10 +288,10 @@ export const rayTraceEtherBlock = (position, yaw, pitch) => {
 /**
  * Retarded way to get center of block cause I couldn't think when I made this
  * @param {Array} blockCoords 
- * @returns 
+ * @returns {Array} Centered blockCoords 
  */
 export const centerCoords = (blockCoords) => {
-    return [blockCoords[0] + (Math.sign(blockCoords[0] === 1) ? -0.5 : 0.5), blockCoords[1], blockCoords[2] + (Math.sign(blockCoords[2] === 1) ? -0.5 : 0.5)]
+    return [Math.floor(blockCoords[0]) + (Math.sign(blockCoords[0] === 1) ? -0.5 : 0.5), Math.floor(blockCoords[1]), Math.floor(blockCoords[2]) + (Math.sign(blockCoords[2] === 1) ? -0.5 : 0.5)]
 }
 
 const rightClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147121_ag", null)
@@ -309,7 +303,8 @@ export const findAirOpening = () => { // For use in pearlclip
     for (let i = Math.floor(playerPos[1]); i > 0; i--) {
         let block1 = World.getBlockAt(playerPos[0], i, playerPos[2]).type.getID()
         let block2 = World.getBlockAt(playerPos[0], i - 1, playerPos[2]).type.getID()
-        if (block1 === 0 && block2 === 0) return i - 1
+        let block3 = World.getBlockAt(playerPos[0], i - 2, playerPos[2]).type.getID()
+        if (block1 === 0 && block2 === 0 && block3 !== 0) return playerPos[1] - i + 1
     }
     return null
 }

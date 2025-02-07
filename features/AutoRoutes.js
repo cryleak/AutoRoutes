@@ -16,6 +16,7 @@ let activeNodesCoords = []
 let moveKeyListener = false
 let moveKeyCooldown = Date.now()
 let blockUnsneakCooldown = Date.now()
+let lastNodeTrigger = Date.now()
 
 const toggleAutoRoutes = (state = !Settings().autoRoutesEnabled) => {
     if (state !== Settings().autoRoutesEnabled) {
@@ -51,7 +52,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...extraNodeData.position, 16777215, true, 0.02, false)
 
 
-            if (extraNodeData.triggered || Date.now() - extraNodeData.lastUse < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
+            if (extraNodeData.triggered) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
             if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1) { // dumb shit
                 if (!color) {
                     if (settings.nodeColorPreset === 0) color = [[0, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [1, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [0, 1, 1]]
@@ -71,7 +72,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             }
         }
         catch (e) {
-            chat(`send me your config also send this message extraNodeData.toString() ${extraNodeData?.toString() ?? "null"}`)
+            chat(`send me your config also send this message extraNodeData.toString() ${extraNodeData?.toString() ?? "null"}\n also update your fucking odin before you send me shit`)
             return scheduleTask(5, updateRoutes)
         }
     }
@@ -95,7 +96,7 @@ const performActions = () => {
             let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
             let yDistance = playerPosition[1] - nodePos[1]
             if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-                if (Date.now() - extraNodeData.lastUse < 1000) return
+                if (node.chained && Date.now() - lastNodeTrigger > 500) return
                 if (extraNodeData.triggered) return
                 extraNodeData.triggered = true
                 if (node.stop) {
@@ -112,6 +113,7 @@ const performActions = () => {
                             Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
                             // scheduleTask(0, () => nodeActions[node.type](node))
                         }
+                        lastNodeTrigger = Date.now()
                         nodeActions[node.type](node)
                     }
                     if (node.delay) {
@@ -133,13 +135,12 @@ const performActions = () => {
                     new Promise((resolve, reject) => {
                         addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useItem" && node.awaitBatSpawn)
                         if (!node.delay) preRotate(node, nodePos)
-                    }).then(nothing => {
+                    }).then(() => {
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
                         let yDistance = playerPosition[1] - nodePos[1]
-                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-                            scheduleTask(1, exec)
-                        } else stopRotating()
+                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) scheduleTask(1, exec)
+                        else stopRotating()
                     }, // Nice linter, VS Code.
                         message => {
                             stopRotating()
@@ -147,7 +148,7 @@ const performActions = () => {
                         })
 
                 } else exec()
-            } else if (extraNodeData.triggered) extraNodeData.triggered = false
+            } else extraNodeData.triggered = false
         } catch (e) {
             console.log(e)
             chat("error check console or something idk")
@@ -193,14 +194,13 @@ const updateRoutes = () => {
             z += 0.5
             nodeToPush.position = [x, y, z]
             nodeToPush.triggered = false
-            nodeToPush.lastUse = 0
             if (node.type === "etherwarp") {
                 if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = convertFromRelative(node.etherBlock)
                 else nodeToPush.etherBlockCoord = rayTraceEtherBlock([x, y, z], convertToRealYaw(node.yaw), node.pitch)
             }
             activeNodesCoords.push(nodeToPush)
         } catch (e) {
-            chat(`send me your config also send me this message node.toString() ${node?.toString() ?? "null"}`)
+            chat(`send me your config also send me this message Object.entries(node).toString()) ${Object?.entries(node)?.toString() ?? "null"}\n also update your fucking odin before you send me shit`)
             console.log(e)
             return scheduleTask(5, updateRoutes) // try again, surely this fixes it
         }
@@ -218,32 +218,27 @@ const nodeActions = {
         rotate(yaw, pitch)
     },
     etherwarp: (args) => {
-        const everything = () => {
-            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-            releaseMovementKeys()
-            const success = swapFromName("Aspect of The Void")
-            if (success[0] === "CANT_FIND") return
-            const rotation = getEtherYawPitchFromArgs(args)
-            if (!rotation) return
-            setSneaking(true)
-            const clickExec = () => {
-                if (success[1] !== Player.getHeldItemIndex()) {
-                    stopRotating()
-                    return chat("You are somehow holding the wrong item...")
-                }
-                clickAt(rotation[0], rotation[1])
+        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+        releaseMovementKeys()
+        const success = swapFromName("Aspect of The Void")
+        if (success[0] === "CANT_FIND") return
+        const rotation = getEtherYawPitchFromArgs(args)
+        if (!rotation) return
+        setSneaking(true)
+        const clickExec = () => {
+            if (success[1] !== Player.getHeldItemIndex()) {
+                stopRotating()
+                return chat("You are somehow holding the wrong item...")
             }
-            if (success[0] === "SWAPPED") {
-                prepareRotate(rotation[0], rotation[1], [Player.getX(), Player.getY(), Player.getZ()], true) // prerotate 1 tick
-                scheduleTask(0, clickExec)
-            } else clickExec()
-            moveKeyListener = true
-            moveKeyCooldown = Date.now()
-            blockUnsneakCooldown = Date.now()
+            clickAt(rotation[0], rotation[1])
         }
-        // Prevent it from freezing the game if it is raytrace scanning...
-        if (args.etherCoordMode === 0) new Thread(everything).start()
-        else everything()
+        if (success[0] === "SWAPPED") {
+            prepareRotate(rotation[0], rotation[1], [Player.getX(), Player.getY(), Player.getZ()], true) // prerotate 1 tick
+            scheduleTask(0, clickExec)
+        } else clickExec()
+        moveKeyListener = true
+        moveKeyCooldown = Date.now()
+        blockUnsneakCooldown = Date.now()
     },
     useItem: (args) => {
         const [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
@@ -275,19 +270,16 @@ const nodeActions = {
         const success = swapFromItemID(46)
         if (success[0] === "CANT_FIND") return
         scheduleTask(0, () => {
-            if (success[1] !== Player.getHeldItemIndex()) {
-                stopRotating()
-                return chat("You are somehow holding the wrong item...")
-            }
+            if (success[1] !== Player.getHeldItemIndex()) return chat("You are somehow holding the wrong item...")
             leftClick()
-            if (!Settings().serverRotations) rotate(origYaw, origPitch)
+            if (Settings().serverRotations) rotate(origYaw, origPitch)
         })
     },
     pearlclip: (args) => {
         const [yaw, pitch] = [0, 90]
         const success = swapFromName("Ender Pearl")
         if (success[0] === "CANT_FIND") return
-        const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - Math.abs(args.pearlClipDistance)
+        const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Math.abs(args.pearlClipDistance)
         if (!clipPos) return chat("Couldn't resolve clip distance.")
         const clickExec = () => {
             if (success[1] !== Player.getHeldItemIndex()) {
@@ -357,6 +349,7 @@ const preRotate = (nodeArgs, pos) => {
 }
 
 register("command", () => { // I can't be bothered to deal with circular imports
+    lastNodeTrigger = Date.now()
     if (!activeNodesCoords.some(node => node.triggered)) return
     actionRegister.unregister()
     for (let i = 0; i < activeNodes.length; i++) {

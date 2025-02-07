@@ -78,7 +78,7 @@ register("packetSent", (packet, event) => {
 
     Client.scheduleTask(0, () => {
         Client.sendPacket(new C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
-        Player.getPlayer().func_70107_b(x, y, z)
+        Player.getPlayer().func_70107_b(x, y - (info.ether ? 0.05 : 0), z)
         Player.getPlayer().func_70016_h(0, 0, 0)
         updatePosition = true;
 

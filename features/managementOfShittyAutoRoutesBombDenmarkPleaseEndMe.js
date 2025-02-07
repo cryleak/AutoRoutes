@@ -99,7 +99,8 @@ register("command", (...args) => { // this is terrible
         delay: 0,
         stop: false,
         center: false,
-        pearlClipDistance: 0
+        pearlClipDistance: 0,
+        chained: false
     }
 
     if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
@@ -125,6 +126,10 @@ register("command", (...args) => { // this is terrible
                 break
             case "height":
                 argsObject.height = parseInt(args[i + 1])
+                break
+            case "chained":
+            case "chain":
+                argsObject.chained = true
                 break
             default:
                 break
@@ -173,7 +178,8 @@ register("command", (...args) => {
     nodeCreation.awaitSecret = node.awaitSecret ?? false
     nodeCreation.commandArgs = node.commandArgs ?? ""
     nodeCreation.delay = node.delay.toString()
-    nodeCreation.pearlClipDistance = node.pearlClipDistance ?? "20"
+    nodeCreation.pearlClipDistance = node.pearlClipDistance ?? "0"
+    nodeCreation.chained = node.chained ?? false
 
     nodeCreation.openGUI()
     Client.scheduleTask(1, () => editing = true)
@@ -221,7 +227,7 @@ function addNode(args, pos) {
 
     pos = convertToRelative(pos)
 
-    let node = { type: nodeType, position: pos, yOffset: yOffset, radius: parseFloat(args.radius), awaitSecret: args.awaitSecret, height: args.height, delay: parseInt(args.delay), stop: args.stop, center: args.center }
+    let node = { type: nodeType, position: pos, yOffset: yOffset, radius: parseFloat(args.radius), awaitSecret: args.awaitSecret, height: args.height, delay: parseInt(args.delay), stop: args.stop, center: args.center, chained: args.chained }
     for (let i = 0; i < nodeSpecificArgs.length; i++) {
         node[nodeSpecificArgs[i]] = args[nodeSpecificArgs[i]]
     }
@@ -270,3 +276,4 @@ nodeCreation.awaitSecret = false
 nodeCreation.commandArgs = ""
 nodeCreation.delay = 0
 nodeCreation.pearlClipDistance = 20
+nodeCreation.chained = false
