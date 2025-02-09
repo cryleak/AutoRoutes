@@ -210,11 +210,11 @@ class Settings {
 
 export default new Settings()
 
-export const nodeTypes = ["look", "etherwarp", "useItem", "walk", "superboom", "pearlclip", "command"]
+export const nodeTypes = ["look", "etherwarp", "useitem", "walk", "superboom", "pearlclip", "command"]
 export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
     ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
-    ["useItem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
+    ["useitem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
     ["walk", ["yaw", "pitch"]],
     ["superboom", ["yaw", "pitch"]],
     ["pearlclip", ["pearlClipDistance"]],

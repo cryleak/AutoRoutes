@@ -72,7 +72,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             }
         }
         catch (e) {
-            chat(`send me your config also send this message extraNodeData.toString() ${extraNodeData?.toString() ?? "null"}\n also update your fucking odin before you send me shit`)
+            chat(`update your fucking odin`)
             return scheduleTask(5, updateRoutes)
         }
     }
@@ -90,7 +90,6 @@ const performActions = () => {
     let playerPosition = playerCoords().player
 
     activeNodesCoords?.forEach((extraNodeData, i) => {
-        try {
             let node = activeNodes[i]
             let nodePos = extraNodeData.position
             let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
@@ -131,9 +130,9 @@ const performActions = () => {
                     } else execNode()
                 }
 
-                if (node.awaitSecret || node.type === "useItem" && node.awaitBatSpawn) {
+                if (node.awaitSecret || node.type === "useitem" && node.awaitBatSpawn) {
                     new Promise((resolve, reject) => {
-                        addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useItem" && node.awaitBatSpawn)
+                        addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useitem" && node.awaitBatSpawn)
                         if (!node.delay) preRotate(node, nodePos)
                     }).then(() => {
                         playerPosition = playerCoords().player
@@ -149,11 +148,6 @@ const performActions = () => {
 
                 } else exec()
             } else extraNodeData.triggered = false
-        } catch (e) {
-            console.log(e)
-            chat("error check console or something idk")
-            return scheduleTask(5, updateRoutes)
-        }
     })
 }
 
@@ -187,6 +181,7 @@ const updateRoutes = () => {
     for (let i = 0; i < activeNodes.length; i++) {
         let nodeToPush = {}
         let node = activeNodes[i]
+        node.type = node.type?.toLowerCase()
         try {
             let [x, y, z] = convertFromRelative(node.position)
             x += 0.5
@@ -200,7 +195,7 @@ const updateRoutes = () => {
             }
             activeNodesCoords.push(nodeToPush)
         } catch (e) {
-            chat(`send me your config also send me this message Object.entries(node).toString()) ${Object?.entries(node)?.toString() ?? "null"}\n also update your fucking odin before you send me shit`)
+            chat(`update your fucking odin`)
             console.log(e)
             return scheduleTask(5, updateRoutes) // try again, surely this fixes it
         }
@@ -232,7 +227,7 @@ const nodeActions = {
         moveKeyCooldown = Date.now()
         blockUnsneakCooldown = Date.now()
     },
-    useItem: (args) => {
+    useitem: (args) => {
         const success = swapFromName(args.itemName)
         if (success[0] === "CANT_FIND") return
 
@@ -316,7 +311,7 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 })
 
 const preRotate = (nodeArgs, pos) => {
-    if (!["etherwarp", "useItem", "pearlclip"].includes(nodeArgs.type)) return
+    if (!["etherwarp", "useitem", "pearlclip"].includes(nodeArgs.type)) return
 
     let yaw
     let pitch
@@ -444,15 +439,15 @@ function convertFile(file) {
                 convertedNode.commandArgs = node.command
                 break
             case "hype":
-                convertedNode.type = "useItem"
+                convertedNode.type = "useitem"
                 convertedNode.itemName = "Hyperion"
                 break
             case "pearl":
-                convertedNode.type = "useItem"
+                convertedNode.type = "useitem"
                 convertedNode.itemName = "Ender Pearl"
                 break
             case "aotv":
-                convertedNode.type = "useItem"
+                convertedNode.type = "useitem"
                 convertedNode.itemName = "Aspect of the Void"
                 break
             case "warp":

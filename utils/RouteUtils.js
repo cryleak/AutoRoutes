@@ -10,7 +10,7 @@ const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
  * @returns An array containing 2 items: the success of the swap and the slot index.
  */
 export const swapFromName = (targetItemName) => {
-    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.toLowerCase()?.includes(targetItemName.toLowerCase()))
+    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(targetItemName.removeFormatting().toLowerCase()))
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
         return ["CANT_FIND", itemSlot]

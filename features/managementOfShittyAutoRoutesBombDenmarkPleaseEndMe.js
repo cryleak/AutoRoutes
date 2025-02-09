@@ -53,7 +53,7 @@ register("command", () => {
 
     nodeCreation.center = false
     nodeCreation.stop = false
-    nodeCreation.itemName = Player?.getHeldItem()?.getName() ?? "Aspect of the Void"
+    nodeCreation.itemName = Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void"
     nodeCreation.etherCoordMode = 2
     nodeCreation.yaw = Player.getYaw().toFixed(3)
     nodeCreation.pitch = Player.getPitch().toFixed(3)
@@ -73,7 +73,7 @@ register("command", () => {
 register("command", (...args) => { // this is terrible
     if (!args.length || !args[0]) return chat([
         `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
-        `§0-§r List of node types: look, etherwarp, useItem, walk, superboom, pearlclip, command`,
+        `§0-§r List of node types: look, etherwarp, useitem, walk, superboom, pearlclip, command`,
         `§0-§r For pearlclip you need to specify the clip distance as the argument after type.`,
         `§0-§r Etherwarp always uses yaw pitch mode when you make it using commands.`,
         `§0-§r List of args you can use:`,
@@ -100,12 +100,12 @@ register("command", (...args) => { // this is terrible
         stop: false,
         center: false,
         pearlClipDistance: 0,
-        chained: false
+        chained: false,
+        itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void"
     }
 
     if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
-    else if (type === "useitem") return chat("you cant make this node using commands cause i cant be bothered to figure out how to fit the item name inside of this shit and i dont care")
-    else if (type === "command") return chat("you cant make this node using commands cause i cant be bothered to figure out how to fit the command args inside of this shit and i dont care")
+    else if (type === "command") return chat("you cant make this node using commands cause i cant be bothered to figure out how to fit the command args inside of this shit and i dont care use /cngui")
 
     for (let i = 0; i < args.length; i++) {
         switch (args[i].toLowerCase()) {
@@ -130,8 +130,6 @@ register("command", (...args) => { // this is terrible
             case "chained":
             case "chain":
                 argsObject.chained = true
-                break
-            default:
                 break
         }
     }
@@ -170,7 +168,7 @@ register("command", (...args) => {
     nodeCreation.pitch = (parseFloat(node.pitch) ?? Player.getPitch()).toFixed(3)
     const prediction = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
     const etherBlock = convertFromRelative(node.etherBlock) ?? prediction
-    nodeCreation.itemName = node.itemName ?? Player?.getHeldItem()?.getName()
+    nodeCreation.itemName = node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting()
     nodeCreation.stopSneaking = node.stopSneaking ?? false
     nodeCreation.awaitBatSpawn = node.awaitBatSpawn ?? false
     nodeCreation.etherCoordMode = node.etherCoordMode ?? 0
@@ -210,7 +208,7 @@ register("command", (index) => {
 function addNode(args, pos) {
     let yOffset = pos[1] - Math.floor(pos[1]) // Allow for decimals on the Y Axis.
     pos = pos.map(coord => coord = Math.floor(parseFloat(coord)))
-    const nodeType = nodeTypes[parseInt(args.type)]
+    const nodeType = nodeTypes[parseInt(args.type)]?.toLowerCase()
     if (!nodeType) return chat("what the fuck is your nodetype")
     const roomName = getRoomName()
     if (!roomName) return chat("No room detected!")
@@ -222,7 +220,7 @@ function addNode(args, pos) {
 
     if (nodeType === "etherwarp") args.etherBlock = convertToRelative(args.etherBlock.split(",").map(coord => Math.floor(parseFloat(coord))))
 
-    if (["look", "etherwarp", "useItem", "walk", "superboom"].includes(nodeType)) args.yaw = convertToRelativeYaw(args.yaw)
+    if (["look", "etherwarp", "useitem", "walk", "superboom"].includes(nodeType)) args.yaw = convertToRelativeYaw(args.yaw)
 
 
     pos = convertToRelative(pos)
@@ -266,7 +264,7 @@ nodeCreation.stop = false
 nodeCreation.radius = 0.5
 nodeCreation.height = "0.1"
 nodeCreation.type = 0
-nodeCreation.itemName = Player?.getHeldItem()?.getName() ?? "Aspect of the Void"
+nodeCreation.itemName = Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void"
 nodeCreation.stopSneaking = false
 nodeCreation.etherCoordMode = 2
 nodeCreation.yaw = 0
