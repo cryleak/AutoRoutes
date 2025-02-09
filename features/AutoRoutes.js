@@ -460,6 +460,9 @@ function convertFile(file) {
                 convertedNode.etherBlock = [0, 0, 0]
                 convertedNode.etherCoordMode = 1
                 break
+            default:
+                ChatLib.chat("Unknown type found! Type: " + type)
+                break
         }
         if (!newObj.nodes[node.room]) newObj.nodes[node.room] = []
         newObj.nodes[node.room].push(convertedNode)

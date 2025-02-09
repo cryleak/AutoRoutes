@@ -171,28 +171,21 @@ const pearlclip = register("packetReceived", (packet, event) => {
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
 
 
-let slotIndex = Player.getHeldItemIndex()
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 /**
  * Sends a C08 with no target block.
  * @param {exec} exec A specified function to run before the C08 is sent
  * @returns Success of the air click, false if it didn't click, true if it did
  */
 export const sendAirClick = (exec) => {
-    if (Player.getHeldItemIndex() !== slotIndex) {
-        chat("hi i think you just 0 tick swapped or something thats not good fortunately i didnt click so surely you dont get banned")
-        return false
-    }
     // c08 packets somehow cause illegalstateexceptions in ct modules sometimes also the playerinteract register in ct triggers whenever forge's playerinteract event triggers but for some fucking reason if i register the forge event directly it only works when i manually right click?????????
     // im using them anyways cause using right click with server rotations is a fucking awful idea
     // nevermind it only happens in singleplayer (for some reason playerinteract triggers on the server thread when you send a c08 and that gets registered by ct so shoutout)
     if (exec) exec()
-    Client.sendPacket(new net.minecraft.network.play.client.C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
+    syncCurrentPlayItem() // sends c09 if you arent holding the correct item already
+    Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
     return true
 }
-
-register("packetSent", (packet) => {
-    slotIndex = packet.func_149614_c()
-}).setFilteredClass(net.minecraft.network.play.client.C09PacketHeldItemChange)
 
 export const getEyeHeightSneaking = () => { // Peak schizo
     return 1.5399999618530273
@@ -308,3 +301,9 @@ export const findAirOpening = () => { // For use in pearlclip
     }
     return null
 }
+
+const PlayerControllerMP = Java.type("net.minecraft.client.multiplayer.PlayerControllerMP")
+
+const syncCurrentPlayItemMethod = PlayerControllerMP.class.getDeclaredMethod("func_78750_j")
+syncCurrentPlayItemMethod.setAccessible(true)
+export const syncCurrentPlayItem = () => syncCurrentPlayItemMethod.invoke(Client.getMinecraft().field_71442_b, null)
