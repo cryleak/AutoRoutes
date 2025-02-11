@@ -307,3 +307,20 @@ const PlayerControllerMP = Java.type("net.minecraft.client.multiplayer.PlayerCon
 const syncCurrentPlayItemMethod = PlayerControllerMP.class.getDeclaredMethod("func_78750_j")
 syncCurrentPlayItemMethod.setAccessible(true)
 export const syncCurrentPlayItem = () => syncCurrentPlayItemMethod.invoke(Client.getMinecraft().field_71442_b, null)
+
+
+
+// i double checked that it wasnt 0 tick swapping and it wasnt :thumbsup:
+/*
+let lastSwapPacket = Date.now()
+let slotIndex = 0
+register("packetSent", (packet) => {
+    lastSwapPacket = Date.now()
+    slotIndex = packet.func_149614_c()
+    ChatLib.chat(slotIndex)
+}).setFilteredClass(net.minecraft.network.play.client.C09PacketHeldItemChange)
+
+register("packetSent", (packet) => {
+ChatLib.chat(`${Date.now() - lastSwapPacket} and ${packet.func_149574_g().toString() === Player.getHeldItem().getItemStack().toString() && Player.getHeldItem().getItemStack().toString() === Player.getInventory().getItems()[slotIndex].getItemStack().toString()}`)
+}).setFilteredClass(C08PacketPlayerBlockPlacement)
+*/

@@ -2,6 +2,7 @@
 
 // this is literally just skidded from soshimee
 import Settings from "../config"
+import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
 
 
 
@@ -10,7 +11,6 @@ const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08P
 const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
-const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper")
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
 const recentFails = []
@@ -45,13 +45,7 @@ register("packetSent", (packet, event) => {
 
     let prediction;
     if (info.ether) {
-        prediction = EtherWarpHelper.INSTANCE.getEtherPos(new net.minecraft.util.Vec3(playerState.x, playerState.y - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727), playerState.z), playerState.yaw, playerState.pitch, info.distance, false)
-
-        const success = prediction.succeeded
-        if (!success) return
-        if (!prediction.pos) return
-        const pos = new BlockPos(prediction.pos)
-        prediction = [pos.x, pos.y, pos.z]
+        prediction = raytraceBlocks([playerState.x, playerState.y + 1.5399999618530273, playerState.z], Vector3.fromPitchYaw(playerState.pitch, playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
 
         if (prediction) {
             prediction[0] += 0.5;
@@ -78,7 +72,7 @@ register("packetSent", (packet, event) => {
 
     Client.scheduleTask(0, () => {
         Client.sendPacket(new C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
-        Player.getPlayer().func_70107_b(x, y - (info.ether ? 0.05 : 0), z)
+        Player.getPlayer().func_70107_b(x, y, z)
         Player.getPlayer().func_70016_h(0, 0, 0)
         updatePosition = true;
 

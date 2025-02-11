@@ -90,64 +90,63 @@ const performActions = () => {
     let playerPosition = playerCoords().player
 
     activeNodesCoords?.forEach((extraNodeData, i) => {
-            let node = activeNodes[i]
-            let nodePos = extraNodeData.position
-            let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-            let yDistance = playerPosition[1] - nodePos[1]
-            if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-                if (node.chained && Date.now() - lastNodeTrigger > 500) return
-                if (extraNodeData.triggered) return
-                extraNodeData.triggered = true
-                if (node.stop) {
-                    releaseMovementKeys()
-                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-                }
-                let exec = () => {
-                    let execNode = () => {
-                        if (!Settings().autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
-                        if (node.center) {
-                            debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
-                            Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
-                            releaseMovementKeys()
-                            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-                            // scheduleTask(0, () => nodeActions[node.type](node))
-                        }
-                        lastNodeTrigger = Date.now()
-                        nodeActions[node.type](node)
+        let node = activeNodes[i]
+        let nodePos = extraNodeData.position
+        let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+        let yDistance = playerPosition[1] - nodePos[1]
+        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
+            if (node.chained && Date.now() - lastNodeTrigger > 500) return
+            if (extraNodeData.triggered) return
+            extraNodeData.triggered = true
+            if (node.stop) {
+                releaseMovementKeys()
+                Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+            }
+            let exec = () => {
+                let execNode = () => {
+                    if (!Settings().autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
+                    if (node.center) {
+                        debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
+                        Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
+                        releaseMovementKeys()
+                        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
                     }
-                    if (node.delay) {
-                        let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
-                        const preRotateExec = () => preRotate(node, nodePos)
-                        execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
-
-                        scheduleTask(execDelay, () => { // Delay execution if there is a delay set
-                            playerPosition = playerCoords().player
-                            let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
-                            let yDistance = playerPosition[1] - nodePos[1]
-                            if (distance < node.radius && yDistance <= node.height && yDistance >= 0) execNode()
-                            else stopRotating()
-                        })
-                    } else execNode()
+                    lastNodeTrigger = Date.now()
+                    nodeActions[node.type](node)
                 }
+                if (node.delay) {
+                    let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
+                    const preRotateExec = () => preRotate(node, nodePos)
+                    execDelay >= 2 ? scheduleTask(execDelay - 2, preRotateExec) : preRotateExec()
 
-                if (node.awaitSecret || node.type === "useitem" && node.awaitBatSpawn) {
-                    new Promise((resolve, reject) => {
-                        addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useitem" && node.awaitBatSpawn)
-                        if (!node.delay) preRotate(node, nodePos)
-                    }).then(() => {
+                    scheduleTask(execDelay, () => { // Delay execution if there is a delay set
                         playerPosition = playerCoords().player
                         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
                         let yDistance = playerPosition[1] - nodePos[1]
-                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) scheduleTask(2, exec)
+                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) execNode()
                         else stopRotating()
-                    }, // Nice linter, VS Code.
-                        message => {
-                            stopRotating()
-                            chat(message)
-                        })
+                    })
+                } else execNode()
+            }
 
-                } else exec()
-            } else extraNodeData.triggered = false
+            if (node.awaitSecret || node.type === "useitem" && node.awaitBatSpawn) {
+                new Promise((resolve, reject) => {
+                    addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useitem" && node.awaitBatSpawn)
+                    if (!node.delay) preRotate(node, nodePos)
+                }).then(() => {
+                    playerPosition = playerCoords().player
+                    let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+                    let yDistance = playerPosition[1] - nodePos[1]
+                    if (distance < node.radius && yDistance <= node.height && yDistance >= 0) scheduleTask(1, exec)
+                    else stopRotating()
+                }, // Nice linter, VS Code.
+                    message => {
+                        stopRotating()
+                        chat(message)
+                    })
+
+            } else exec()
+        } else extraNodeData.triggered = false
     })
 }
 
@@ -233,17 +232,7 @@ const nodeActions = {
 
         const [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
         if (args.stopSneaking) setSneaking(false)
-        const clickExec = () => {
-            if (success[1] !== Player.getHeldItemIndex()) {
-                stopRotating()
-                return chat("You are somehow holding the wrong item...")
-            }
-            clickAt(yaw, pitch)
-        }
-        if (args.stopSneaking) {
-            prepareRotate(yaw, pitch, [Player.getX(), Player.getY(), Player.getZ()], true)
-            scheduleTask(0, clickExec)
-        } else clickExec()
+        clickAt(yaw, pitch)
     },
     walk: (args) => {
         let [yaw, pitch] = [convertToRealYaw(args.yaw), args.pitch]
