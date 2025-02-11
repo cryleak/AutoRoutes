@@ -160,6 +160,7 @@ export const registerPearlClip = (dist) => {
     pearlclip.register()
 }
 
+/*
 const pearlclip = register("packetReceived", (packet, event) => {
     Client.scheduleTask(0, () => {
         if (event?.isCancelled()) return
@@ -169,6 +170,16 @@ const pearlclip = register("packetReceived", (packet, event) => {
         distance = 0
     })
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
+*/
+
+// I skidded this from Alari. No clue why it works better but he says it does idk
+const pearlclip = register("soundPlay", (pos, name, vol) => {
+    if (name != "mob.endermen.portal" || vol != 1) return
+    pearlclip.unregister()
+    Player.getPlayer().func_70107_b(...centerCoords([Player.getX(), Player.getY() - distance, Player.getZ()]))
+    chat(`Pearlclipped ${distance} blocks down.`)
+    amount = 0
+}).unregister()
 
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
