@@ -8,7 +8,7 @@ const listeners = []
 let moveKeyCooldown = Date.now()
 
 
-function addListener(successExec, failExec, awaitingBatSpawn) {
+function addSecretListener(successExec, failExec, awaitingBatSpawn) {
     const listener = {
         success: successExec,
         fail: failExec,
@@ -24,7 +24,7 @@ function addListener(successExec, failExec, awaitingBatSpawn) {
         failExec("Await timed out!")
     })
 }
-export default addListener
+export default addSecretListener
 
 register("worldUnload", () => {
     while (listeners.length) listeners.pop()

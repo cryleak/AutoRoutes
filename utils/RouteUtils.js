@@ -1,3 +1,5 @@
+
+import Settings from "../config"
 import { debugMessage, chat, scheduleTask } from "./utils"
 import { convertFromRelative, convertToRealYaw } from "./RoomUtils"
 
@@ -155,7 +157,6 @@ export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), nul
 
 let distance
 export const registerPearlClip = (dist) => {
-    if (!dist) return
     distance = Math.abs(dist)
     pearlclip.register()
 }
@@ -173,14 +174,15 @@ const pearlclip = register("packetReceived", (packet, event) => {
 */
 
 // I skidded this from Alari. No clue why it works better but he says it does idk
-const pearlclip = register("soundPlay", (pos, name, vol) => {
+const pearlclip = register("soundPlay", (pos, name, vol, pitch) => {
     if (name != "mob.endermen.portal" || vol != 1) return
     pearlclip.unregister()
-    Player.getPlayer().func_70107_b(...centerCoords([Player.getX(), Player.getY() - distance, Player.getZ()]))
+    // These 2 lines look pretty funny
+    if (!distance) distance = findAirOpening()
+    if (!distance) return chat("Couldn't find an air opening!")
+    Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()) - distance, Math.floor(Player.getZ()) + 0.5)
     chat(`Pearlclipped ${distance} blocks down.`)
-    amount = 0
 }).unregister()
-
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 /**

@@ -9,13 +9,13 @@ const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPl
 let lastTP = Date.now()
 let packetsPreRotating = 0
 let yaw = 0
-let renderYaw = null
 let pitch = 0
 let clicking = false
 let rotating = false
 let preRotating = false
 let currentPreRotatePosition = null
 let awaitingMotionUpdate = false
+let renderRotations = false
 
 register("packetSent", (packet, event) => { // someone should totally teach me how to use ct asm or asm in general (im not learning that shit)
     if (!awaitingMotionUpdate) return
@@ -71,12 +71,27 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     awaitingMotionUpdate = true
 })
 
-register("renderEntity", (entity) => {
-    if (entity.getEntity() !== Player.getPlayer()) return
-    if (!renderYaw && renderYaw !== 0) return
+// why the fuck is changing the pitch of the player in third person so complicated
+let clientSidePitch = Player.getPitch()
+register(net.minecraftforge.client.event.RenderPlayerEvent$Pre, (event) => {
+    if (event.entity !== Player.getPlayer()) return
+    if (!renderRotations) return
     if (!Settings().renderServerRotation) return
+
+    clientSidePitch = Player.getPitch()
     Player.getPlayer().field_70761_aq = yaw
     Player.getPlayer().field_70759_as = yaw
+    Player.getPlayer().field_70125_A = pitch
+    Player.getPlayer().field_70127_C = pitch
+})
+
+register(net.minecraftforge.client.event.RenderPlayerEvent$Post, (event) => {
+    if (event.entity !== Player.getPlayer()) return
+    if (!renderRotations) return
+    if (!Settings().renderServerRotation) return
+
+    Player.getPlayer().field_70125_A = clientSidePitch
+    Player.getPlayer().field_70127_C = clientSidePitch
 })
 
 export function clickAt(y, p) {
@@ -91,8 +106,8 @@ export function clickAt(y, p) {
     preRotating = false
     while (queuedPreRotates.length) queuedPreRotates.pop()
     currentPreRotatePosition = null
-    renderYaw = yaw
-    Client.scheduleTask(0, () => renderYaw = null)
+    renderRotations = true
+    Client.scheduleTask(0, () => renderRotations = false)
     if (!Settings().serverRotations) rotate(yaw, pitch)
 }
 
@@ -103,7 +118,7 @@ export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
         yaw = parseFloat(y)
         pitch = parseFloat(p)
         preRotating = true
-        renderYaw = yaw
+        renderRotations = true
         if (!Settings().serverRotations) rotate(yaw, pitch)
     }
     if (!preRotating && !clicking && !rotating || cancelAllPreRotates) {
@@ -119,13 +134,25 @@ export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
     }
 }
 
+let lastSentYaw = Player.getYaw()
+register("packetSent", (packet, event) => {
+    Client.scheduleTask(0, () => {
+        if (event.isCancelled() || !packet.func_149463_k()) return
+        lastSentYaw = packet.func_149462_g()
+    })
+}).setFilteredClass(C03PacketPlayer).setPriority(Priority.LOWEST)
+
+export const getLastSentYaw = () => {
+    return lastSentYaw
+}
+
 export function stopRotating() {
     rotating = false
     clicking = false
     preRotating = false
     while (queuedPreRotates.length) queuedPreRotates.pop()
     currentPreRotatePosition = null
-    renderYaw = null
+    renderRotations = false
 }
 
 const airClick = () => {

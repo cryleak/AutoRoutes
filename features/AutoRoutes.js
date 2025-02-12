@@ -1,11 +1,12 @@
 import Settings from "../config"
 import Promise from "../../PromiseV2"
-import addListener from "../events/SecretListener"
+import addSecretListener from "../events/SecretListener"
+import addLineOfSightListener from "../events/LineOfSight"
 import RenderLibV2 from "../../RenderLibV2"
 import { renderBox, renderScandinavianFlag, chat, scheduleTask, debugMessage } from "../utils/utils"
 import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
-import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState, findAirOpening } from "../utils/RouteUtils"
-import { clickAt, prepareRotate, stopRotating } from "../utils/ServerRotations"
+import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState, findAirOpening, getEyeHeightSneaking, getEtherYawPitch } from "../utils/RouteUtils"
+import { clickAt, getLastSentYaw, prepareRotate, stopRotating } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
 import { getDistance2D, drawLine3d, getDistanceToCoord } from "../../BloomCore/utils/utils"
 import { Keybind } from "../../KeybindFix"
@@ -52,7 +53,7 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
             if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...extraNodeData.position, 16777215, true, 0.02, false)
 
 
-            if (extraNodeData.triggered) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
+            if (extraNodeData.triggered || Date.now() - extraNodeData.lastTriggered < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
             if (settings.nodeColorPreset === 0 || settings.nodeColorPreset === 1) { // dumb shit
                 if (!color) {
                     if (settings.nodeColorPreset === 0) color = [[0, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [1, 1, 1], [1, 0.6862745098039216, 0.6862745098039216], [0, 1, 1]]
@@ -61,12 +62,12 @@ register("renderWorld", () => { // Bro this turned into a mess im too lazy to fi
                 renderBox(position, node.radius, node.radius * 2, color)
             }
             else if (settings.nodeColorPreset === 2) {
-                if (!extraNodeData.triggered) color = [[0, 0, 1], [1, 1, 0]] // sweden
+                if (!extraNodeData.triggered && Date.now() - extraNodeData.lastTriggered > 1000) color = [[0, 0, 1], [1, 1, 0]] // sweden
                 else color = [[1, 0, 0], [1, 1, 1]] // denmark
                 renderScandinavianFlag(position, node.radius * 2, node.radius, color[0], color[1])
             }
             else if (settings.nodeColorPreset === 3) { // node
-                if (extraNodeData.triggered) color = [1, 0, 0, 1]
+                if (extraNodeData.triggered || Date.now() - extraNodeData.lastTriggered < 1000) color = [1, 0, 0, 1]
                 else color = [settings.nodeColor1[0] / 255, settings.nodeColor1[1] / 255, settings.nodeColor1[2] / 255, settings.nodeColor1[3] / 255]
                 RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, settings.ringSlices, 1, 90, 0, 0, ...color, false, true)
             }
@@ -97,6 +98,7 @@ const performActions = () => {
         if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
             if (node.chained && Date.now() - lastNodeTrigger > 500) return
             if (extraNodeData.triggered) return
+            if (Date.now() - extraNodeData.lastTriggered < 1000) return
             extraNodeData.triggered = true
             if (node.stop) {
                 releaseMovementKeys()
@@ -104,15 +106,31 @@ const performActions = () => {
             }
             let exec = () => {
                 let execNode = () => {
-                    if (!Settings().autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
-                    if (node.center) {
-                        debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
-                        Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
-                        releaseMovementKeys()
-                        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                    const performAction = () => {
+                        if (!Settings().autoRoutesEnabled) return stopRotating() // Don't execute node if you disabled autoroutes between the time the node first triggered and when it executes actions
+                        if (node.center) {
+                            debugMessage(`Distance to center: ${getDistanceToCoord(...nodePos, false)}`)
+                            Player.getPlayer().func_70107_b(nodePos[0], nodePos[1], nodePos[2])
+                            releaseMovementKeys()
+                            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                        }
+                        extraNodeData.lastTriggered = Date.now()
+                        lastNodeTrigger = Date.now()
+                        nodeActions[node.type](node)
                     }
-                    lastNodeTrigger = Date.now()
-                    nodeActions[node.type](node)
+                    if (node.block && node.type === "etherwarp" && (node.etherCoordMode === 0 || node.etherCoordMode === 2)) new Promise((resolve, reject) => {
+                        addLineOfSightListener(() => resolve(Math.random()), (msg) => reject(msg), node)
+                    }).then(() => {
+                        playerPosition = playerCoords().player
+                        let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePos[0], nodePos[2])
+                        let yDistance = playerPosition[1] - nodePos[1]
+                        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) scheduleTask(0, performAction)
+                    },
+                        message => {
+                            stopRotating()
+                            chat(message)
+                        })
+                    else performAction()
                 }
                 if (node.delay) {
                     let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
@@ -131,7 +149,7 @@ const performActions = () => {
 
             if (node.awaitSecret || node.type === "useitem" && node.awaitBatSpawn) {
                 new Promise((resolve, reject) => {
-                    addListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useitem" && node.awaitBatSpawn)
+                    addSecretListener(() => resolve(Math.random()), (msg) => reject(msg), node.type === "useitem" && node.awaitBatSpawn)
                     if (!node.delay) preRotate(node, nodePos)
                 }).then(() => {
                     playerPosition = playerCoords().player
@@ -188,6 +206,7 @@ const updateRoutes = () => {
             z += 0.5
             nodeToPush.position = [x, y, z]
             nodeToPush.triggered = false
+            nodeToPush.lastTriggered = 0
             if (node.type === "etherwarp") {
                 if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = convertFromRelative(node.etherBlock)
                 else nodeToPush.etherBlockCoord = rayTraceEtherBlock([x, y, z], convertToRealYaw(node.yaw), node.pitch)
@@ -254,13 +273,12 @@ const nodeActions = {
         })
     },
     pearlclip: (args) => {
-        const [yaw, pitch] = [0, 90]
+        const [yaw, pitch] = [Settings().serverRotations ? getLastSentYaw() : Player.getYaw(), 90]
         const success = swapFromName("Ender Pearl")
         if (success[0] === "CANT_FIND") return
-        const clipPos = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Math.abs(args.pearlClipDistance)
-        if (!clipPos) return chat("Couldn't resolve clip distance.")
+        const clipDistance = args.pearlClipDistance == 0 || !args.pearlClipDistance ? null : args.pearlClipDistance
         clickAt(yaw, pitch)
-        registerPearlClip(clipPos)
+        registerPearlClip(clipDistance)
     },
     command: (args) => {
         try {

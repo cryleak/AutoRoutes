@@ -11,6 +11,7 @@ class Settings {
         this.addDependency("Yaw", "show yaw")
         this.addDependency("Pitch", "show pitch")
         this.addDependency("Etherwarp Block Coordinates", "show etherBlock")
+        this.addDependency("Await line of sight", "show blockArg")
         this.addDependency("Await secret pickup, skull, lever click or bat death", "show awaitSecret")
         this.addDependency("Await bat spawning", "show awaitBatSpawn")
         this.addDependency("Pearl VClip Distance", "show pearlClipDistance")
@@ -110,6 +111,13 @@ class Settings {
     etherBlock = "";
 
     @SwitchProperty({
+        name: "Await line of sight",
+        description: "Waits for the specified Etherwarp block to be visible before etherwarping.",
+        category: "Route"
+    })
+    block = false
+
+    @SwitchProperty({
         name: "Await secret pickup, skull, lever click or bat death",
         description: "",
         category: "Route"
@@ -206,6 +214,13 @@ class Settings {
         category: "Schizo vigilance shit ignore this"
     })
     showCommandArgs = false
+
+    @SwitchProperty({
+        name: "show blockArg",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showBlockArg = false
 }
 
 export default new Settings()
@@ -213,7 +228,7 @@ export default new Settings()
 export const nodeTypes = ["look", "etherwarp", "useitem", "walk", "superboom", "pearlclip", "command"]
 export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
-    ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch"]],
+    ["etherwarp", ["etherBlock", "etherCoordMode", "yaw", "pitch", "block"]],
     ["useitem", ["yaw", "pitch", "itemName", "stopSneaking", "awaitBatSpawn"]],
     ["walk", ["yaw", "pitch"]],
     ["superboom", ["yaw", "pitch"]],

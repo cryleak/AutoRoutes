@@ -17,6 +17,7 @@ const dependencyChecks = { // sigma
     showAwaitBatSpawn: (data) => !data.awaitSecret && data.type === 2,
     showPearlClipDistance: (data) => data.type === 5,
     showCommandArgs: (data) => data.type === 6,
+    showBlockArg: (data) => data.type === 1 && (data.etherCoordMode === 0 || data.etherCoordMode === 2)
 }
 
 let nodeCoords = null
@@ -63,6 +64,7 @@ register("command", () => {
     nodeCreation.commandArgs = ""
     nodeCreation.delay = "0"
     nodeCreation.pearlClipDistance = "20"
+    nodeCreation.block = false
 
 
 
@@ -74,15 +76,21 @@ register("command", (...args) => { // this is terrible
     if (!args.length || !args[0]) return chat([
         `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
         `§0-§r List of node types: look, etherwarp, useitem, walk, superboom, pearlclip, command`,
-        `§0-§r For pearlclip you need to specify the clip distance as the argument after type.`,
-        `§0-§r Etherwarp always uses yaw pitch mode when you make it using commands.`,
+        `§0-§r For pearlclip you need to specify the clip distance as the first argument after type.`,
+        `§0-§r By default, Etherwarp uses yaw pitch mode when you make it using commands, unless you use the block arg or change it using the ethercoordmode argument.`,
         `§0-§r List of args you can use:`,
         `§0-§r §rdelay §0<§fnumber§0>`,
-        `§0-§r awaitsecret`,
+        `§0-§r awaitsecret/await`,
+        `§0-§r awaitbatspawn/awaitbat (can't be used at the same time as awaitsecret)`,
         `§0-§r stop`,
         `§0-§r center`,
         `§0-§r radius §0<§rnumber§0>`,
-        `§0-§r height §0<§rnumber§0>`
+        `§0-§r height §0<§rnumber§0>`,
+        `§0-§r yaw §0<§rnumber§0>`,
+        `§0-§r pitch §0<§rnumber§0>`,
+        `§0-§r chained/chain (makes the node chained)`,
+        `§0-§r block (for use in etherwarp only, waits for the block you want to etherwarp to to actually be etherwarpable to)`,
+        `§0-§r ethercoordmode §0<§rraytrace/yawpitch/calcyawpitch§0>`
     ].join("\n"))
 
     const type = args.shift()
@@ -101,7 +109,8 @@ register("command", (...args) => { // this is terrible
         center: false,
         pearlClipDistance: 0,
         chained: false,
-        itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void"
+        itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void",
+        block: false
     }
 
     if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
@@ -112,8 +121,15 @@ register("command", (...args) => { // this is terrible
             case "delay":
                 argsObject.delay = parseInt(args[i + 1])
                 break
+            case "await":
             case "awaitsecret":
                 argsObject.awaitSecret = true
+                argsObject.awaitBat = false
+                break
+            case "awaitbatspawn":
+            case "awaitbat":
+                argsObject.awaitSecret = false
+                argsObject.awaitBat = true
                 break
             case "stop":
                 argsObject.stop = true
@@ -122,14 +138,37 @@ register("command", (...args) => { // this is terrible
                 argsObject.center = true
                 break
             case "radius":
-                argsObject.radius = parseInt(args[i + 1])
+                argsObject.radius = parseFloat(args[i + 1])
                 break
             case "height":
-                argsObject.height = parseInt(args[i + 1])
+                argsObject.height = parseFloat(args[i + 1])
+                break
+            case "yaw":
+                argsObject.yaw = parseFloat(args[i + 1])
+                break
+            case "pitch":
+                argsObject.pitch = parseFloat(args[i + 1])
                 break
             case "chained":
             case "chain":
                 argsObject.chained = true
+                break
+            case "block":
+                if (!args.includes("ethercoordmode")) argsObject.etherCoordMode = 2
+                argsObject.block = true
+                break
+            case "ethercoordmode":
+                switch (args[i + 1]) {
+                    case "raytrace":
+                        argsObject.etherCoordMode = 0
+                        break
+                    case "yawpitch":
+                        argsObject.etherCoordMode = 1
+                        break
+                    case "calcyawpitch":
+                        argsObject.etherCoordMode = 2
+                        break
+                }
                 break
         }
     }
@@ -178,6 +217,7 @@ register("command", (...args) => {
     nodeCreation.delay = node.delay.toString()
     nodeCreation.pearlClipDistance = node.pearlClipDistance ?? "0"
     nodeCreation.chained = node.chained ?? false
+    nodeCreation.block = node.block ?? false
 
     nodeCreation.openGUI()
     Client.scheduleTask(1, () => editing = true)
