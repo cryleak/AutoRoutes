@@ -63,22 +63,27 @@ register("packetReceived", (packet) => { // Bat death listener
 
 
 const drops = ["item.item.monsterPlacer", "item.item.bone", "item.item.skull.char", "item.tile.weightedPlate_heavy", "item.item.enderPearl", "item.item.potion", "item.item.skull.char", "item.item.shears", "item.item.paper", "item.tile.tripWireSource"]
+let entitiesLastTick = []
 
-register(Java.type("me.odinmain.events.impl.EntityLeaveWorldEvent"), (event) => { // Item pickup listener
-    const entity = event.getEntity()
-    if (!(entity instanceof net.minecraft.entity.item.EntityItem)) return
-    const wrappedEntity = new Entity(entity)
-    const name = wrappedEntity.getName()
-    if (!drops.includes(name)) return
+register("tick", () => { // Schizo solution for item pickup listener
+    const itemEntities = World.getAllEntitiesOfType(net.minecraft.entity.item.EntityItem)
 
-    if (getDistanceToEntity(wrappedEntity) > 6) return
+    for (let entity of entitiesLastTick) {
+        if (itemEntities.some(oldEntity => oldEntity.getUUID().toString() === entity.getUUID().toString())) continue
 
-    for (let i = listeners.length - 1; i >= 0; i--) {
-        let listener = listeners[i]
-        if (listener.awaitingBat) continue
-        listeners.splice(i, 1)
-        listener.success()
+        if (!drops.includes(entity.getName())) continue
+
+        if (getDistanceToEntity(entity) > 10) continue
+
+        for (let i = listeners.length - 1; i >= 0; i--) {
+            let listener = listeners[i]
+            if (listener.awaitingBat) continue
+            listeners.splice(i, 1)
+            listener.success()
+        }
+        break
     }
+    entitiesLastTick = itemEntities
 })
 
 register("tick", () => { // Wait for bat spawn
