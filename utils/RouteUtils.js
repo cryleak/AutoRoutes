@@ -155,34 +155,6 @@ leftClickMethod.setAccessible(true)
 
 export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), null)
 
-let distance
-export const registerPearlClip = (dist) => {
-    distance = Math.abs(dist)
-    pearlclip.register()
-}
-
-/*
-const pearlclip = register("packetReceived", (packet, event) => {
-    Client.scheduleTask(0, () => {
-        if (event?.isCancelled()) return
-        pearlclip.unregister()
-        chat(`Pearlclipped ${distance} blocks down.`)
-        Player.getPlayer().func_70107_b(...centerCoords([Player.getX(), Player.getY() - distance, Player.getZ()]))
-        distance = 0
-    })
-}).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook).unregister()
-*/
-
-// I skidded this from Alari. No clue why it works better but he says it does idk
-const pearlclip = register("soundPlay", (pos, name, vol, pitch) => {
-    if (name != "mob.endermen.portal" || vol != 1) return
-    pearlclip.unregister()
-    // These 2 lines look pretty funny
-    if (!distance) distance = findAirOpening()
-    if (!distance) return chat("Couldn't find an air opening!")
-    Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Math.floor(Player.getY()) - distance, Math.floor(Player.getZ()) + 0.5)
-    chat(`Pearlclipped ${distance} blocks down.`)
-}).unregister()
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 /**
@@ -305,12 +277,12 @@ rightClickMethod.setAccessible(true);
 export const rightClick = () => rightClickMethod.invoke(Client.getMinecraft(), null);
 
 export const findAirOpening = () => { // For use in pearlclip
-    const playerPos = [Player.getX(), Player.getY(), Player.getZ()]
+    const playerPos = [Math.floor(Player.getX()), Math.floor(Player.getY()), Math.floor(Player.getZ())]
     for (let i = Math.floor(playerPos[1]); i > 0; i--) {
         let block1 = World.getBlockAt(playerPos[0], i, playerPos[2]).type.getID()
         let block2 = World.getBlockAt(playerPos[0], i - 1, playerPos[2]).type.getID()
         let block3 = World.getBlockAt(playerPos[0], i - 2, playerPos[2]).type.getID()
-        if (block1 === 0 && block2 === 0 && block3 !== 0) return playerPos[1] - i + 1
+        if (block1 === 0 && block2 === 0 && block3 !== 0) return i - 1
     }
     return null
 }

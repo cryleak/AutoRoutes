@@ -35,11 +35,7 @@ register("packetSent", (packet, event) => { // someone should totally teach me h
 
     // ChatLib.chat(`${newPacket ? newPacket.class.getSimpleName() : "null"} ${newPacket?.func_149462_g() ?? "null"} ${newPacket?.func_149470_h() ?? "null"}`)
     cancel(event)
-    if (Settings().serverRotations) Client.sendPacket(newPacket)
-    else {
-        rotate(yaw, pitch)
-        Client.sendPacket(packet)
-    }
+    Client.sendPacket(newPacket)
 
     if (preRotating) debugMessage(`prerotating ${[yaw.toFixed(2), pitch.toFixed(2)].toString()}`)
     else if (clicking) debugMessage(`clicked ${[yaw.toFixed(2), pitch.toFixed(2)].toString()} ${Player.asPlayerMP().isSneaking()}`)
@@ -108,10 +104,13 @@ export function clickAt(y, p) {
     currentPreRotatePosition = null
     renderRotations = true
     Client.scheduleTask(0, () => renderRotations = false)
-    if (!Settings().serverRotations) rotate(yaw, pitch)
 }
 
 export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
+    if (!pos) {
+        chat("CHeck console idk why is this happening bro herp me")
+        throw new Error("invalid pos")
+    }
     if (!y && y !== 0 || !p && p !== 0) return chat(`Invalid rotation! How is this possible?\nyaw = ${y} pitch = ${p}`)
     const exec = () => {
         if (yaw !== y && pitch !== p) packetsPreRotating = 0
@@ -119,11 +118,10 @@ export function prepareRotate(y, p, pos, cancelAllPreRotates = false) {
         pitch = parseFloat(p)
         preRotating = true
         renderRotations = true
-        if (!Settings().serverRotations) rotate(yaw, pitch)
     }
     if (!preRotating && !clicking && !rotating || cancelAllPreRotates) {
         if (cancelAllPreRotates) while (queuedPreRotates.length) queuedPreRotates.pop()
-        currentPreRotatePosition = [...pos]
+        currentPreRotatePosition = pos
         exec()
     } else {
         queuedPreRotates.push({ exec, pos })

@@ -39,14 +39,6 @@ config
         value: false
     })
     .addSwitch({
-        configName: "serverRotations",
-        title: "Toggle Server Rotations",
-        description: "Might ban idk",
-        category: "Main",
-        subcategory: "AutoRoutes",
-        value: false
-    })
-    .addSwitch({
         configName: "renderServerRotation",
         title: "Render Server Rotation",
         description: "Shows you where the player is looking serverside when you go into third person view. Similar to Oringo's feature, but likely worse.",

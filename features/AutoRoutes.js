@@ -5,7 +5,7 @@ import addLineOfSightListener from "../events/LineOfSight"
 import RenderLibV2 from "../../RenderLibV2"
 import { renderBox, renderScandinavianFlag, chat, scheduleTask, debugMessage } from "../utils/utils"
 import { convertFromRelative, getRoomName, convertToRealYaw } from "../utils/RoomUtils"
-import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, registerPearlClip, movementKeys, sneakKey, getDesiredSneakState, findAirOpening, getEyeHeightSneaking, getEtherYawPitch } from "../utils/RouteUtils"
+import { getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, swapFromName, rotate, setSneaking, setWalking, movementKeys, releaseMovementKeys, centerCoords, swapFromItemID, leftClick, movementKeys, sneakKey, getDesiredSneakState, findAirOpening, getEyeHeightSneaking, getEtherYawPitch } from "../utils/RouteUtils"
 import { clickAt, getLastSentYaw, prepareRotate, stopRotating } from "../utils/ServerRotations"
 import { data } from "../utils/routesData"
 import { getDistance2D, drawLine3d, getDistanceToCoord } from "../../BloomCore/utils/utils"
@@ -276,9 +276,15 @@ const nodeActions = {
         const [yaw, pitch] = [Settings().serverRotations ? getLastSentYaw() : Player.getYaw(), 90]
         const success = swapFromName("Ender Pearl")
         if (success[0] === "CANT_FIND") return
-        const clipDistance = args.pearlClipDistance == 0 || !args.pearlClipDistance ? null : args.pearlClipDistance
+        let clipYPosition = args.pearlClipDistance == 0 || !args.pearlClipDistance ? findAirOpening() : Player.getY() - Math.abs(args.pearlClipDistance) + 1
         clickAt(yaw, pitch)
-        registerPearlClip(clipDistance)
+        const pearlclip = register("soundPlay", (pos, name, vol) => {
+            if (name != "mob.endermen.portal" || vol != 1) return
+            pearlclip.unregister()
+            if (!clipYPosition) return chat("Couldn't find an air opening!")
+            chat(`Pearlclipped ${Math.round(((Player.getY() - clipYPosition) * 10)) / 10} blocks down.`)
+            Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, clipYPosition, Math.floor(Player.getZ()) + 0.5)
+        })
     },
     command: (args) => {
         try {
@@ -327,7 +333,7 @@ const preRotate = (nodeArgs, pos) => {
         if (!yawPitch) return
         [yaw, pitch] = yawPitch
     } else if (nodeArgs.type === "pearlclip") {
-        [yaw, pitch] = [0, 90]
+        [yaw, pitch] = [Settings().serverRotations ? getLastSentYaw() : Player.getYaw(), 90]
     } else {
         [yaw, pitch] = [convertToRealYaw(nodeArgs.yaw), nodeArgs.pitch]
     }
